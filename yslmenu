@@ -1,267 +1,258 @@
 --[[
-    YslMenu V106 - GODLIKE EDITION
-    ✓ VIP Door Bypass
-    ✓ TRUE Wave Immunity (won't die anymore)
-    ✓ Enhanced UI & Features
-    by yslscripts 😈
+    ═══════════════════════════════════════
+     YslMenu V107 - ULTIMATE BRAINROT EDITION
+    ═══════════════════════════════════════
+    Game: Escape Tsunami For Brainrots
+    Creator: yslscripts 😈
+    
+    ✅ Features:
+    • True Wave Immunity (5 methods)
+    • VIP Bypass (OPTIMIZED - No lag)
+    • Smart Brainrot Collection
+    • Radioactive Event Auto-Farm
+    • Bombardiro Bomb Auto-Collect
+    • Auto-Complete Obby
+    • Safe Zone ESP
+    • Speed Bypass (Up to 2000)
+    • Auto-Rebirth System
+    • Mutation Tracker
 ]]
 
+--// Load Rayfield
 local success, Rayfield = pcall(function()
     return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 end)
 
 if not success then
-    warn("Failed to load Rayfield library")
+    warn("❌ Failed to load Rayfield UI Library")
     return
 end
 
 --// Services
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
---// Variables
+--// Player Variables
 local lplayer = Players.LocalPlayer
 local character = lplayer.Character or lplayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local rootPart = character:WaitForChild("HumanoidRootPart")
 
---// Global Settings
-_G.YslSettings = {
+--// Game-Specific Variables
+local PlayerData = {
+    Speed = 0,
+    CarryCapacity = 1,
+    Money = 0,
+    Rebirths = 0,
+    BrainrotsCollected = 0,
+    RadioactiveCoins = 0,
+    MutationsFound = 0
+}
+
+--// Settings
+_G.YslBrainrot = {
     -- Movement
-    Speeding = false,
-    Jump = false,
+    Speed = false,
     SpeedValue = 100,
+    InfJump = false,
     NoClip = false,
     
     -- Collection
-    Magnet = false,
-    MagnetSpeed = 0.03,
-    AutoCollect = false,
+    AutoCollectBrainrots = false,
+    AutoCollectMoney = false,
+    BrainrotRarity = "All", -- Common, Uncommon, Rare, Epic, Legendary, Mythical, Cosmic, Secret, Celestial, All
+    OnlyMutations = false,
     
-    -- Protection
-    WaveImmunity = false,
-    GodMode = false,
-    AntiDrown = false,
-    AntiKill = false,
+    -- Radioactive Event
+    RadioactiveEvent = false,
+    AutoCompleteObby = false,
+    AutoCollectRadCoins = false,
+    AutoDestroyBombs = false,
+    AutoSpin = false,
     
-    -- Bypass
+    -- Wave Protection
+    WaveImmunity = true,
+    AutoHideSafezone = false,
+    RemoveWaves = false,
+    
+    -- VIP Bypass (OPTIMIZED)
     VIPBypass = false,
-    DoorBypass = false,
+    VIPCheckInterval = 2, -- Check every 2 seconds instead of every frame
+    
+    -- Auto Features
+    AutoRebirth = false,
+    RebirthAt = 300, -- Speed threshold
+    AutoUpgradeSpeed = false,
+    AutoUpgradeCarry = false,
+    
+    -- ESP
+    BrainrotESP = false,
+    SafezoneESP = false,
+    RadCoinESP = false,
     
     -- Stats
-    CoinsCollected = 0,
-    WavesBlocked = 0
+    Stats = {
+        BrainrotsCollected = 0,
+        WavesBlocked = 0,
+        RadCoinsCollected = 0,
+        ObbyCompletions = 0
+    }
 }
 
---// Anti-Cheat Bypass
-local function setHumanoidProperty(property, value)
-    pcall(function()
-        if humanoid then
-            humanoid[property] = value
-        end
-    end)
+--// Connections Storage
+local Connections = {}
+
+--// Helper Functions
+local function Notify(title, content, duration)
+    Rayfield:Notify({
+        Title = title,
+        Content = content,
+        Duration = duration or 3,
+        Image = 4483362458
+    })
 end
 
---// ULTIMATE Wave Immunity System (Actually prevents death)
-local waveImmunityConnection
-local function setupUltimateWaveImmunity()
-    if waveImmunityConnection then
-        waveImmunityConnection:Disconnect()
+local function Disconnect(name)
+    if Connections[name] then
+        Connections[name]:Disconnect()
+        Connections[name] = nil
+    end
+end
+
+local function GetBrainrotFolder()
+    return Workspace:FindFirstChild("Brainrots") or Workspace:FindFirstChild("Items") or Workspace
+end
+
+local function GetSafeZones()
+    local safezones = {}
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") and (v.Name:lower():find("trench") or v.Name:lower():find("safe") or v.Name:lower():find("pit")) then
+            table.insert(safezones, v)
+        end
+    end
+    return safezones
+end
+
+--// WAVE IMMUNITY SYSTEM (Multi-layered protection)
+local function SetupWaveImmunity()
+    if not _G.YslBrainrot.WaveImmunity then
+        Disconnect("WaveImmunity")
+        return
     end
     
-    if not _G.YslSettings.WaveImmunity then return end
-    
-    -- Method 1: Disable all wave damage scripts
-    pcall(function()
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
-                local name = v.Name:lower()
-                if name:find("wave") or name:find("water") or name:find("tsunami") or 
-                   name:find("flood") or name:find("kill") or name:find("damage") then
-                    
-                    -- Destroy all scripts that could cause damage
-                    for _, script in pairs(v:GetDescendants()) do
-                        if script:IsA("Script") or script:IsA("LocalScript") then
-                            script.Enabled = false
-                            script:Destroy()
-                        end
-                    end
-                    
-                    -- Disable all touch events
-                    v.CanTouch = false
-                    v.CanCollide = false
-                    
-                    -- Remove from collision group
-                    pcall(function()
-                        v.CollisionGroup = "NoCollision"
-                    end)
-                end
-            end
-        end
-    end)
-    
-    -- Method 2: Hook all damage to player
-    waveImmunityConnection = humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-        if _G.YslSettings.WaveImmunity or _G.YslSettings.GodMode then
+    Connections.WaveImmunity = RunService.Heartbeat:Connect(function()
+        pcall(function()
+            if not character or not humanoid or not rootPart then return end
+            
+            -- Method 1: Health protection
             if humanoid.Health < humanoid.MaxHealth then
                 humanoid.Health = humanoid.MaxHealth
-                _G.YslSettings.WavesBlocked = _G.YslSettings.WavesBlocked + 1
+                _G.YslBrainrot.Stats.WavesBlocked = _G.YslBrainrot.Stats.WavesBlocked + 1
             end
-        end
-    end)
-    
-    -- Method 3: Prevent damage from touching water
-    for _, part in pairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            local connections = getconnections(part.Touched)
-            for _, connection in pairs(connections) do
-                if _G.YslSettings.WaveImmunity then
-                    connection:Disable()
-                else
-                    connection:Enable()
-                end
-            end
-        end
-    end
-    
-    -- Method 4: Force humanoid state to prevent drowning
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-    
-    -- Method 5: Remove water from terrain constantly
-    task.spawn(function()
-        while _G.YslSettings.WaveImmunity do
-            pcall(function()
-                local region = Region3.new(
-                    rootPart.Position - Vector3.new(50, 50, 50),
-                    rootPart.Position + Vector3.new(50, 50, 50)
-                )
-                Workspace.Terrain:FillRegion(region, 4, Enum.Material.Air)
-            end)
-            task.wait(0.1)
-        end
+            
+            -- Method 2: Remove water around player
+            local region = Region3.new(
+                rootPart.Position - Vector3.new(30, 30, 30),
+                rootPart.Position + Vector3.new(30, 30, 30)
+            )
+            region = region:ExpandToGrid(4)
+            Workspace.Terrain:FillRegion(region, 4, Enum.Material.Air)
+            
+            -- Method 3: Disable swimming/drowning states
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+        end)
     end)
 end
 
---// VIP Door Bypass System
-local doorBypassConnection
-local function setupVIPDoorBypass()
-    if doorBypassConnection then
-        doorBypassConnection:Disconnect()
+--// VIP BYPASS SYSTEM (OPTIMIZED - No more lag!)
+local lastVIPCheck = 0
+local function SetupVIPBypass()
+    if not _G.YslBrainrot.VIPBypass then
+        Disconnect("VIPBypass")
+        -- Restore VIP doors
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v:GetAttribute("YslVIPDoor") then
+                v.CanCollide = true
+                v.Transparency = v:GetAttribute("OriginalTransparency") or 0
+            end
+        end
+        return
     end
     
-    if not _G.YslSettings.VIPBypass then return end
-    
-    -- Method 1: Remove all door barriers
-    pcall(function()
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
-                local name = v.Name:lower()
-                local parent = v.Parent and v.Parent.Name:lower() or ""
-                
-                -- Check if it's a VIP/locked door
-                if name:find("vip") or name:find("door") or name:find("barrier") or 
-                   name:find("gate") or name:find("lock") or parent:find("vip") or 
-                   parent:find("door") then
+    -- Only check VIP doors every X seconds (not every frame!)
+    Connections.VIPBypass = RunService.Heartbeat:Connect(function()
+        local currentTime = tick()
+        if currentTime - lastVIPCheck < _G.YslBrainrot.VIPCheckInterval then return end
+        lastVIPCheck = currentTime
+        
+        pcall(function()
+            -- Find VIP doors within range only
+            local nearbyDistance = 50
+            
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    local name = v.Name:lower()
                     
-                    -- Make door intangible
-                    v.CanCollide = false
-                    v.CanTouch = false
-                    v.Transparency = 0.8
-                    
-                    -- Remove ProximityPrompts (VIP prompts)
-                    for _, prompt in pairs(v:GetDescendants()) do
-                        if prompt:IsA("ProximityPrompt") then
-                            prompt.Enabled = false
-                        end
-                    end
-                    
-                    -- Destroy any door scripts
-                    for _, script in pairs(v:GetDescendants()) do
-                        if script:IsA("Script") or script:IsA("LocalScript") then
-                            if script.Name:lower():find("door") or script.Name:lower():find("vip") then
-                                script:Destroy()
+                    -- Check if it's a VIP door
+                    if name:find("vip") or name:find("glass") or (v.Parent and v.Parent.Name:lower():find("vip")) then
+                        local distance = (v.Position - rootPart.Position).Magnitude
+                        
+                        -- Only modify doors within 50 studs
+                        if distance < nearbyDistance then
+                            -- Mark it so we can restore later
+                            if not v:GetAttribute("YslVIPDoor") then
+                                v:SetAttribute("YslVIPDoor", true)
+                                v:SetAttribute("OriginalTransparency", v.Transparency)
+                            end
+                            
+                            v.CanCollide = false
+                            v.Transparency = 0.7
+                        else
+                            -- Restore doors that are far away
+                            if v:GetAttribute("YslVIPDoor") then
+                                v.CanCollide = true
+                                v.Transparency = v:GetAttribute("OriginalTransparency") or 0
                             end
                         end
                     end
                 end
             end
-        end
-    end)
-    
-    -- Method 2: Auto-unlock doors on approach
-    doorBypassConnection = RunService.Heartbeat:Connect(function()
-        if not _G.YslSettings.VIPBypass then return end
-        
-        pcall(function()
-            local nearbyDoors = {}
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") and (v.Name:lower():find("door") or v.Name:lower():find("vip")) then
-                    local distance = (v.Position - rootPart.Position).Magnitude
-                    if distance < 30 then
-                        v.CanCollide = false
-                        
-                        -- Open door if it has a configuration
-                        if v.Parent:FindFirstChild("Configuration") then
-                            v.Parent.Configuration.Locked.Value = false
-                        end
-                    end
-                end
-            end
         end)
     end)
 end
 
---// Enhanced Speed Bypass (Multi-method)
-local speedConnection
-local function setupSpeedBypass()
-    if speedConnection then
-        speedConnection:Disconnect()
+--// SPEED BYPASS SYSTEM
+local function SetupSpeedBypass()
+    if not _G.YslBrainrot.Speed then
+        Disconnect("Speed")
+        if humanoid then humanoid.WalkSpeed = 16 end
+        return
     end
     
-    if not _G.YslSettings.Speeding then return end
-    
-    speedConnection = RunService.Heartbeat:Connect(function()
+    Connections.Speed = RunService.Heartbeat:Connect(function()
         pcall(function()
             if not humanoid or not rootPart then return end
             
-            -- Method 1: Direct WalkSpeed
-            humanoid.WalkSpeed = _G.YslSettings.SpeedValue
+            -- Direct speed
+            humanoid.WalkSpeed = _G.YslBrainrot.SpeedValue
             
-            -- Method 2: CFrame movement boost
+            -- CFrame boost when moving
             if humanoid.MoveDirection.Magnitude > 0 then
-                local moveDirection = humanoid.MoveDirection
-                local speedMultiplier = (_G.YslSettings.SpeedValue / 16) - 1
-                
-                rootPart.CFrame = rootPart.CFrame + (moveDirection * speedMultiplier * 0.1)
-            end
-            
-            -- Method 3: Velocity boost
-            if humanoid.MoveDirection.Magnitude > 0 then
-                local velocity = rootPart.Velocity
-                velocity = Vector3.new(
-                    humanoid.MoveDirection.X * _G.YslSettings.SpeedValue,
-                    velocity.Y,
-                    humanoid.MoveDirection.Z * _G.YslSettings.SpeedValue
-                )
-                rootPart.Velocity = velocity
+                local boost = (_G.YslBrainrot.SpeedValue / 16) - 1
+                rootPart.CFrame = rootPart.CFrame + (humanoid.MoveDirection * boost * 0.08)
             end
         end)
     end)
 end
 
---// No Clip System
-local noClipConnection
-local function setupNoClip()
-    if noClipConnection then
-        noClipConnection:Disconnect()
-    end
-    
-    if not _G.YslSettings.NoClip then
-        -- Re-enable collision
+--// NO CLIP SYSTEM
+local function SetupNoClip()
+    if not _G.YslBrainrot.NoClip then
+        Disconnect("NoClip")
         for _, v in pairs(character:GetDescendants()) do
             if v:IsA("BasePart") then
                 v.CanCollide = true
@@ -270,137 +261,321 @@ local function setupNoClip()
         return
     end
     
-    noClipConnection = RunService.Stepped:Connect(function()
-        if _G.YslSettings.NoClip then
-            for _, v in pairs(character:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = false
-                end
+    Connections.NoClip = RunService.Stepped:Connect(function()
+        for _, v in pairs(character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
             end
         end
     end)
 end
 
---// ULTIMATE Smart Coin Magnet
-local magnetConnection
-local function setupSmartMagnet()
-    if magnetConnection then
-        magnetConnection:Disconnect()
+--// BRAINROT AUTO-COLLECTION
+local function IsBrainrotValid(brainrot, rarity)
+    if not brainrot or not brainrot:IsA("Model") then return false end
+    
+    -- Check rarity filter
+    if _G.YslBrainrot.BrainrotRarity ~= "All" then
+        local brainrotName = brainrot.Name:lower()
+        local targetRarity = _G.YslBrainrot.BrainrotRarity:lower()
+        
+        if not brainrotName:find(targetRarity) then
+            return false
+        end
     end
     
-    if not _G.YslSettings.Magnet then return end
+    -- Check mutation filter
+    if _G.YslBrainrot.OnlyMutations then
+        local hasMutation = false
+        for _, v in pairs(brainrot:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("PointLight") then
+                hasMutation = true
+                break
+            end
+        end
+        if not hasMutation then return false end
+    end
     
-    magnetConnection = RunService.Heartbeat:Connect(function()
-        if not _G.YslSettings.Magnet or not rootPart then return end
-        
+    return true
+end
+
+local function SetupAutoCollectBrainrots()
+    if not _G.YslBrainrot.AutoCollectBrainrots then
+        Disconnect("AutoCollectBrainrots")
+        return
+    end
+    
+    Connections.AutoCollectBrainrots = RunService.Heartbeat:Connect(function()
         pcall(function()
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") or v:IsA("MeshPart") then
-                    local name = v.Name:lower()
-                    local parent = v.Parent and v.Parent.Name:lower() or ""
+            if not rootPart then return end
+            
+            local brainrotFolder = GetBrainrotFolder()
+            
+            for _, brainrot in pairs(brainrotFolder:GetChildren()) do
+                if IsBrainrotValid(brainrot) then
+                    local primaryPart = brainrot.PrimaryPart or brainrot:FindFirstChild("HumanoidRootPart") or brainrot:FindFirstChildWhichIsA("BasePart")
                     
-                    -- Check if it's a collectible
-                    local isCollectible = false
-                    
-                    -- Coin/Radio detection
-                    if name:find("coin") or name:find("radio") or name:find("money") or 
-                       name:find("cash") or name:find("collect") or name:find("pickup") or
-                       name:find("token") or parent:find("coin") or parent:find("radio") then
-                        isCollectible = true
-                    end
-                    
-                    -- Radioactive glow detection
-                    if v:FindFirstChild("PointLight") then
-                        local light = v:FindFirstChild("PointLight")
-                        if light and (light.Color == Color3.fromRGB(0, 255, 0) or 
-                                      light.Color == Color3.fromRGB(0, 255, 127) or
-                                      light.Brightness > 2) then
-                            isCollectible = true
-                        end
-                    end
-                    
-                    -- Particle effect detection (radioactive items usually have particles)
-                    if v:FindFirstChildOfClass("ParticleEmitter") then
-                        isCollectible = true
-                    end
-                    
-                    -- EXCLUDE players and NPCs
-                    if v.Parent and v.Parent:FindFirstChild("Humanoid") then
-                        isCollectible = false
-                    end
-                    
-                    -- EXCLUDE your own character
-                    if v:IsDescendantOf(character) then
-                        isCollectible = false
-                    end
-                    
-                    -- Collect the item
-                    if isCollectible then
-                        -- Teleport to player
-                        v.CFrame = rootPart.CFrame
-                        v.CanCollide = false
-                        v.Anchored = false
+                    if primaryPart then
+                        -- Teleport brainrot to player
+                        primaryPart.CFrame = rootPart.CFrame
+                        primaryPart.CanCollide = false
                         
-                        -- Force touch event
-                        if v.Touched then
-                            firetouchinterest(rootPart, v, 0)
+                        -- Trigger collection
+                        if primaryPart.Touched then
+                            firetouchinterest(rootPart, primaryPart, 0)
                             task.wait(0.01)
-                            firetouchinterest(rootPart, v, 1)
+                            firetouchinterest(rootPart, primaryPart, 1)
                         end
                         
-                        _G.YslSettings.CoinsCollected = _G.YslSettings.CoinsCollected + 1
+                        _G.YslBrainrot.Stats.BrainrotsCollected = _G.YslBrainrot.Stats.BrainrotsCollected + 1
                     end
                 end
             end
         end)
-        
-        task.wait(_G.YslSettings.MagnetSpeed)
+        task.wait(0.1) -- Collect every 0.1 seconds
     end)
 end
 
---// Auto Collect (Instant teleport to collectibles)
-local autoCollectConnection
-local function setupAutoCollect()
-    if autoCollectConnection then
-        autoCollectConnection:Disconnect()
+--// RADIOACTIVE EVENT AUTO-FARM
+local function FindSecretTunnel()
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") and (v.Name:lower():find("gate") or v.Name:lower():find("tunnel") or v.Name:lower():find("entrance")) then
+            if v.Name:lower():find("destroy") or v.Name:lower():find("broken") then
+                return v
+            end
+        end
+    end
+    return nil
+end
+
+local function SetupAutoCompleteObby()
+    if not _G.YslBrainrot.AutoCompleteObby then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoCompleteObby do
+            pcall(function()
+                -- Check if radioactive event is active (green sky)
+                if game.Lighting.Ambient == Color3.fromRGB(0, 255, 0) or 
+                   game.Lighting.ColorShift_Top == Color3.fromRGB(0, 255, 0) then
+                    
+                    -- Find and TP to tunnel entrance
+                    local tunnel = FindSecretTunnel()
+                    if tunnel then
+                        rootPart.CFrame = tunnel.CFrame + Vector3.new(0, 5, 0)
+                        task.wait(1)
+                        
+                        -- Complete obby (find end point)
+                        local endPoint = Workspace:FindFirstChild("ObbyEnd") or Workspace:FindFirstChild("Finish")
+                        if endPoint then
+                            rootPart.CFrame = endPoint.CFrame
+                            _G.YslBrainrot.Stats.ObbyCompletions = _G.YslBrainrot.Stats.ObbyCompletions + 1
+                        end
+                    end
+                end
+            end)
+            task.wait(60) -- Check every minute
+        end
+    end)
+end
+
+local function SetupAutoCollectRadCoins()
+    if not _G.YslBrainrot.AutoCollectRadCoins then
+        Disconnect("RadCoins")
+        return
     end
     
-    if not _G.YslSettings.AutoCollect then return end
-    
-    autoCollectConnection = RunService.Heartbeat:Connect(function()
+    Connections.RadCoins = RunService.Heartbeat:Connect(function()
         pcall(function()
-            local nearestCoin = nil
-            local nearestDistance = math.huge
-            
             for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    local name = v.Name:lower()
-                    if (name:find("coin") or name:find("radio")) and not v:IsDescendantOf(character) then
-                        local distance = (v.Position - rootPart.Position).Magnitude
-                        if distance < nearestDistance and distance < 200 then
-                            nearestDistance = distance
-                            nearestCoin = v
+                if v:IsA("BasePart") and (v.Name:lower():find("radioactive") or v.Name:lower():find("coin")) then
+                    -- Check for green glow (radioactive indicator)
+                    local light = v:FindFirstChild("PointLight")
+                    if light and light.Color == Color3.fromRGB(0, 255, 0) then
+                        v.CFrame = rootPart.CFrame
+                        _G.YslBrainrot.Stats.RadCoinsCollected = _G.YslBrainrot.Stats.RadCoinsCollected + 1
+                    end
+                end
+            end
+        end)
+        task.wait(0.05)
+    end)
+end
+
+local function SetupAutoDestroyBombs()
+    if not _G.YslBrainrot.AutoDestroyBombs then
+        Disconnect("Bombs")
+        return
+    end
+    
+    Connections.Bombs = RunService.Heartbeat:Connect(function()
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("Model") and (v.Name:lower():find("bomb") or v.Name:lower():find("nuclear")) then
+                    local bombPart = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
+                    if bombPart then
+                        -- Teleport bomb to player to "hit" it
+                        bombPart.CFrame = rootPart.CFrame
+                        
+                        -- Simulate bat hit
+                        local tool = lplayer.Character:FindFirstChildOfClass("Tool")
+                        if tool and tool:FindFirstChild("Handle") then
+                            firetouchinterest(tool.Handle, bombPart, 0)
+                            task.wait(0.01)
+                            firetouchinterest(tool.Handle, bombPart, 1)
                         end
                     end
                 end
             end
-            
-            if nearestCoin then
-                rootPart.CFrame = nearestCoin.CFrame
-            end
         end)
-        task.wait(0.5)
+        task.wait(0.1)
     end)
 end
 
---// 1. CREATE WINDOW (ENHANCED UI)
+--// AUTO REBIRTH SYSTEM
+local function GetPlayerSpeed()
+    -- Try to find speed in player's stats
+    local speedStat = lplayer:FindFirstChild("leaderstats") and lplayer.leaderstats:FindFirstChild("Speed")
+    if speedStat then
+        return speedStat.Value
+    end
+    return humanoid.WalkSpeed
+end
+
+local function PerformRebirth()
+    pcall(function()
+        local rebirthButton = Workspace:FindFirstChild("RebirthButton") or 
+                             lplayer.PlayerGui:FindFirstChild("RebirthGui")
+        
+        if rebirthButton then
+            -- Fire rebirth remote
+            if ReplicatedStorage:FindFirstChild("RebirthEvent") then
+                ReplicatedStorage.RebirthEvent:FireServer()
+            end
+        end
+    end)
+end
+
+local function SetupAutoRebirth()
+    if not _G.YslBrainrot.AutoRebirth then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoRebirth do
+            pcall(function()
+                local currentSpeed = GetPlayerSpeed()
+                if currentSpeed >= _G.YslBrainrot.RebirthAt then
+                    PerformRebirth()
+                    Notify("Auto Rebirth", "Rebirthed at " .. currentSpeed .. " speed!", 3)
+                    task.wait(10) -- Wait before checking again
+                end
+            end)
+            task.wait(5)
+        end
+    end)
+end
+
+--// REMOVE WAVES
+local function RemoveAllWaves()
+    local count = 0
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") or v:IsA("Model") then
+            local name = v.Name:lower()
+            if name:find("wave") or name:find("tsunami") or name:find("water") or name:find("flood") then
+                -- Destroy scripts first
+                for _, script in pairs(v:GetDescendants()) do
+                    if script:IsA("Script") or script:IsA("LocalScript") then
+                        script:Destroy()
+                    end
+                end
+                v:Destroy()
+                count = count + 1
+            end
+        end
+    end
+    
+    -- Clear terrain water
+    Workspace.Terrain:Clear()
+    
+    return count
+end
+
+--// ESP SYSTEMS
+local function CreateESP(part, color, text)
+    if part:FindFirstChild("YslESP") then return end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "YslESP"
+    highlight.Parent = part
+    highlight.FillColor = color
+    highlight.OutlineColor = color
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "YslESP"
+    billboard.Parent = part
+    billboard.Size = UDim2.new(0, 100, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = billboard
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = color
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+end
+
+local function SetupBrainrotESP()
+    if not _G.YslBrainrot.BrainrotESP then
+        -- Remove ESP
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v.Name == "YslESP" then v:Destroy() end
+        end
+        return
+    end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.BrainrotESP do
+            pcall(function()
+                local folder = GetBrainrotFolder()
+                for _, brainrot in pairs(folder:GetChildren()) do
+                    if brainrot:IsA("Model") then
+                        local part = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
+                        if part and not part:FindFirstChild("YslESP") then
+                            CreateESP(part, Color3.fromRGB(255, 255, 0), brainrot.Name)
+                        end
+                    end
+                end
+            end)
+            task.wait(2)
+        end
+    end)
+end
+
+local function SetupSafezoneESP()
+    if not _G.YslBrainrot.SafezoneESP then
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v.Name == "YslESP" then v:Destroy() end
+        end
+        return
+    end
+    
+    local safezones = GetSafeZones()
+    for _, zone in pairs(safezones) do
+        CreateESP(zone, Color3.fromRGB(0, 255, 0), "SAFE")
+    end
+end
+
+--// CREATE GUI
 local Window = Rayfield:CreateWindow({
-    Name = "⚡ YslMenu V106 - GODLIKE EDITION ⚡",
-    LoadingTitle = "YslMenu V106 Initializing...",
-    LoadingSubtitle = "VIP Bypass | Wave Immunity | Auto-Farm 😈",
+    Name = "⚡ YslMenu V107 - Brainrot Master ⚡",
+    LoadingTitle = "YslMenu V107 Loading...",
+    LoadingSubtitle = "The ULTIMATE Escape Tsunami Script 🌊",
     ConfigurationSaving = {
         Enabled = true,
-        FileName = "YslMenu_V106_Godlike",
+        FileName = "YslBrainrot_V107",
         FolderName = "YslScripts"
     },
     Discord = {
@@ -411,54 +586,50 @@ local Window = Rayfield:CreateWindow({
     KeySystem = false
 })
 
---// 2. SETUP TABS
+--// TABS
 local HomeTab = Window:CreateTab("🏠 Home", 4483362458)
+local CollectionTab = Window:CreateTab("🧠 Collection", 4483362458)
+local RadioactiveTab = Window:CreateTab("☢️ Radioactive", 4483362458)
 local MovementTab = Window:CreateTab("🚀 Movement", 4483362458)
-local FarmTab = Window:CreateTab("💰 Auto-Farm", 4483362458)
 local ProtectionTab = Window:CreateTab("🛡️ Protection", 4483362458)
 local BypassTab = Window:CreateTab("🔓 Bypass", 4483362458)
-local TeleportTab = Window:CreateTab("📍 Teleports", 4483362458)
-local VisualTab = Window:CreateTab("🎨 Visual", 4483362458)
+local AutoTab = Window:CreateTab("🤖 Auto Features", 4483362458)
+local ESPTab = Window:CreateTab("👁️ ESP", 4483362458)
 local InfoTab = Window:CreateTab("ℹ️ Info", 4483362458)
 
---// 3. HOME TAB
-HomeTab:CreateSection("👤 User Profile")
+--// HOME TAB
+HomeTab:CreateSection("👤 Player Profile")
 
 pcall(function()
     HomeTab:CreateImageLabel({
-        Name = "ProfilePicture",
+        Name = "Avatar",
         Image = "rbxthumb://type=AvatarHeadShot&id=" .. lplayer.UserId .. "&w=420&h=420",
         ImageSize = Vector2.new(150, 150)
     })
 end)
 
-HomeTab:CreateLabel("👋 Welcome: " .. lplayer.DisplayName)
-HomeTab:CreateLabel("🆔 Username: @" .. lplayer.Name)
-HomeTab:CreateLabel("🔢 User ID: " .. lplayer.UserId)
+HomeTab:CreateLabel("👋 " .. lplayer.DisplayName)
+HomeTab:CreateLabel("🆔 @" .. lplayer.Name)
 
 HomeTab:CreateParagraph({
-    Title = "🎮 Script Status",
-    Content = "Version: V106 GODLIKE\n⚡ Rank: ULTIMATE GOD TIER\n🎯 Game: Tsunami Escape\n💎 Status: ALL SYSTEMS ONLINE\n😈 ysl on top"
+    Title = "🎮 YslMenu V107",
+    Content = "The ULTIMATE script for Escape Tsunami!\n\n✅ Wave Immunity\n✅ Auto-Farm Everything\n✅ VIP Bypass (Lag-Free)\n✅ Radioactive Event Farm\n✅ Smart Collection\n\n😈 ysl on top"
 })
 
-HomeTab:CreateSection("📊 Live Statistics")
+HomeTab:CreateSection("📊 Live Stats")
 
 local statsLabel = HomeTab:CreateLabel("Loading stats...")
 task.spawn(function()
-    while task.wait(2) do
+    while task.wait(3) do
         pcall(function()
-            local health = humanoid and math.floor(humanoid.Health) or 0
-            local maxHealth = humanoid and math.floor(humanoid.MaxHealth) or 0
-            local speed = humanoid and math.floor(humanoid.WalkSpeed) or 0
-            local position = rootPart and math.floor(rootPart.Position.Y) or 0
-            
-            statsLabel:Set(
-                "❤️ Health: " .. health .. "/" .. maxHealth .. "\n" ..
-                "⚡ Speed: " .. speed .. "\n" ..
-                "📍 Height: " .. position .. "\n" ..
-                "💰 Coins Collected: " .. _G.YslSettings.CoinsCollected .. "\n" ..
-                "🌊 Waves Blocked: " .. _G.YslSettings.WavesBlocked
+            local stats = string.format(
+                "🧠 Brainrots: %d\n🌊 Waves Blocked: %d\n☢️ Rad Coins: %d\n🎯 Obby Completions: %d",
+                _G.YslBrainrot.Stats.BrainrotsCollected,
+                _G.YslBrainrot.Stats.WavesBlocked,
+                _G.YslBrainrot.Stats.RadCoinsCollected,
+                _G.YslBrainrot.Stats.ObbyCompletions
             )
+            statsLabel:Set(stats)
         end)
     end
 end)
@@ -466,42 +637,218 @@ end)
 HomeTab:CreateSection("⚠️ Quick Actions")
 
 HomeTab:CreateButton({
-    Name = "🆘 PANIC MODE (ALL PROTECTION)",
+    Name = "🆘 EMERGENCY MODE (Everything ON)",
     Callback = function()
-        _G.YslSettings.WaveImmunity = true
-        _G.YslSettings.GodMode = true
-        _G.YslSettings.AntiDrown = true
-        _G.YslSettings.VIPBypass = true
+        _G.YslBrainrot.WaveImmunity = true
+        _G.YslBrainrot.VIPBypass = true
+        _G.YslBrainrot.Speed = true
+        _G.YslBrainrot.SpeedValue = 500
+        _G.YslBrainrot.AutoCollectBrainrots = true
         
-        setupUltimateWaveImmunity()
-        setupVIPDoorBypass()
+        SetupWaveImmunity()
+        SetupVIPBypass()
+        SetupSpeedBypass()
+        SetupAutoCollectBrainrots()
         
-        humanoid.Health = humanoid.MaxHealth
-        
-        -- TP to highest safe spot
-        local highestY = -math.huge
-        local safePart = nil
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") and v.Anchored and v.Position.Y > highestY then
-                highestY = v.Position.Y
-                safePart = v
-            end
-        end
-        if safePart then
-            rootPart.CFrame = CFrame.new(safePart.Position + Vector3.new(0, 10, 0))
+        -- TP to safe spot
+        local safezones = GetSafeZones()
+        if #safezones > 0 then
+            rootPart.CFrame = safezones[1].CFrame + Vector3.new(0, 10, 0)
         end
         
-        Rayfield:Notify({
-            Title = "🆘 PANIC MODE ACTIVATED",
-            Content = "God Mode + Wave Immunity + VIP Bypass + Safe TP 😈",
-            Duration = 5,
-            Image = 4483362458
-        })
+        Notify("🆘 EMERGENCY", "All protections activated! Safe TP executed! 😈", 5)
     end,
 })
 
---// 4. MOVEMENT TAB
-MovementTab:CreateSection("⚡ Speed Enhancement")
+--// COLLECTION TAB
+CollectionTab:CreateSection("🧠 Brainrot Collection")
+
+CollectionTab:CreateToggle({
+    Name = "🧲 Auto-Collect Brainrots",
+    CurrentValue = false,
+    Flag = "AutoCollect",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoCollectBrainrots = Value
+        SetupAutoCollectBrainrots()
+        Notify("Auto-Collect", Value and "Collecting brainrots! 🧠" or "Stopped", 2)
+    end,
+})
+
+CollectionTab:CreateDropdown({
+    Name = "🎯 Target Rarity",
+    Options = {"All", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical", "Cosmic", "Secret", "Celestial"},
+    CurrentOption = "All",
+    Flag = "Rarity",
+    Callback = function(Option)
+        _G.YslBrainrot.BrainrotRarity = Option
+        Notify("Rarity Filter", "Now targeting: " .. Option, 2)
+    end,
+})
+
+CollectionTab:CreateToggle({
+    Name = "✨ Only Collect Mutations",
+    CurrentValue = false,
+    Flag = "OnlyMutations",
+    Callback = function(Value)
+        _G.YslBrainrot.OnlyMutations = Value
+    end,
+})
+
+CollectionTab:CreateSection("💰 Money Collection")
+
+CollectionTab:CreateToggle({
+    Name = "💵 Auto-Collect Money",
+    CurrentValue = false,
+    Flag = "AutoMoney",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoCollectMoney = Value
+        
+        if Value then
+            task.spawn(function()
+                while _G.YslBrainrot.AutoCollectMoney do
+                    pcall(function()
+                        -- Find money spawns
+                        for _, v in pairs(Workspace:GetDescendants()) do
+                            if v:IsA("BasePart") and v.Name:lower():find("money") then
+                                v.CFrame = rootPart.CFrame
+                            end
+                        end
+                    end)
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end,
+})
+
+CollectionTab:CreateSection("🎯 Instant Actions")
+
+CollectionTab:CreateButton({
+    Name = "📍 TP to Celestial Zone (600m+)",
+    Callback = function()
+        -- TP to far end of map
+        local farthestPoint = nil
+        local maxDistance = 0
+        
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                local distance = (v.Position - Vector3.new(0, 0, 0)).Magnitude
+                if distance > maxDistance then
+                    maxDistance = distance
+                    farthestPoint = v
+                end
+            end
+        end
+        
+        if farthestPoint then
+            rootPart.CFrame = CFrame.new(farthestPoint.Position + Vector3.new(0, 10, 0))
+            Notify("Teleport", "Warped to Celestial zone! 🌟", 3)
+        end
+    end,
+})
+
+CollectionTab:CreateButton({
+    Name = "🏠 Return to Base",
+    Callback = function()
+        local spawn = Workspace:FindFirstChild("SpawnLocation")
+        if spawn then
+            rootPart.CFrame = spawn.CFrame + Vector3.new(0, 5, 0)
+        else
+            rootPart.CFrame = CFrame.new(0, 50, 0)
+        end
+        Notify("Teleport", "Returned to base 🏠", 2)
+    end,
+})
+
+--// RADIOACTIVE TAB
+RadioactiveTab:CreateSection("☢️ Radioactive Event Farm")
+
+RadioactiveTab:CreateParagraph({
+    Title = "ℹ️ Event Info",
+    Content = "Radioactive events happen every hour for 5 minutes!\n\n🎯 Secret Tunnel Obby\n💣 Bombardiro Bomb Farming\n🎰 Auto-Spin Wheel"
+})
+
+RadioactiveTab:CreateToggle({
+    Name = "🏃 Auto-Complete Obby",
+    CurrentValue = false,
+    Flag = "AutoObby",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoCompleteObby = Value
+        if Value then
+            SetupAutoCompleteObby()
+            Notify("Auto Obby", "Will complete obby when event starts! 🏃", 3)
+        end
+    end,
+})
+
+RadioactiveTab:CreateToggle({
+    Name = "☢️ Auto-Collect Radioactive Coins",
+    CurrentValue = false,
+    Flag = "AutoRadCoins",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoCollectRadCoins = Value
+        SetupAutoCollectRadCoins()
+        Notify("Rad Coins", Value and "Collecting radioactive coins! ☢️" or "Stopped", 2)
+    end,
+})
+
+RadioactiveTab:CreateToggle({
+    Name = "💣 Auto-Destroy Bombardiro Bombs",
+    CurrentValue = false,
+    Flag = "AutoBombs",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoDestroyBombs = Value
+        SetupAutoDestroyBombs()
+        Notify("Bomb Farm", Value and "Destroying bombs for coins! 💣" or "Stopped", 2)
+    end,
+})
+
+RadioactiveTab:CreateToggle({
+    Name = "🎰 Auto-Spin Wheel (20 coins each)",
+    CurrentValue = false,
+    Flag = "AutoSpin",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoSpin = Value
+        
+        if Value then
+            task.spawn(function()
+                while _G.YslBrainrot.AutoSpin do
+                    pcall(function()
+                        -- Find spin wheel
+                        local wheel = Workspace:FindFirstChild("RadioactiveSpin") or 
+                                     Workspace:FindFirstChild("SpinWheel")
+                        
+                        if wheel then
+                            local clickDetector = wheel:FindFirstChildOfClass("ClickDetector")
+                            if clickDetector then
+                                fireclickdetector(clickDetector)
+                            end
+                        end
+                    end)
+                    task.wait(2) -- Spin every 2 seconds
+                end
+            end)
+        end
+    end,
+})
+
+RadioactiveTab:CreateSection("📍 Event Teleports")
+
+RadioactiveTab:CreateButton({
+    Name = "🚪 TP to Secret Tunnel Entrance",
+    Callback = function()
+        local tunnel = FindSecretTunnel()
+        if tunnel then
+            rootPart.CFrame = tunnel.CFrame + Vector3.new(0, 5, 0)
+            Notify("Teleport", "Found secret tunnel entrance! 🚪", 3)
+        else
+            Notify("Error", "Tunnel not found! Wait for radioactive event.", 3)
+        end
+    end,
+})
+
+--// MOVEMENT TAB
+MovementTab:CreateSection("⚡ Speed Controls")
 
 MovementTab:CreateSlider({
     Name = "Speed Value",
@@ -510,688 +857,384 @@ MovementTab:CreateSlider({
     CurrentValue = 100,
     Flag = "SpeedValue",
     Callback = function(Value)
-        _G.YslSettings.SpeedValue = Value
+        _G.YslBrainrot.SpeedValue = Value
     end,
 })
 
 MovementTab:CreateToggle({
-    Name = "🚀 Enable Speed Hack (ULTIMATE BYPASS)",
+    Name = "🚀 Enable Speed Hack",
     CurrentValue = false,
     Flag = "SpeedHack",
     Callback = function(Value)
-        _G.YslSettings.Speeding = Value
-        setupSpeedBypass()
-        
-        if Value then
-            Rayfield:Notify({
-                Title = "Speed Hack",
-                Content = "Speed: " .. _G.YslSettings.SpeedValue .. " ACTIVATED 🚀",
-                Duration = 3
-            })
-        else
-            humanoid.WalkSpeed = 16
-        end
+        _G.YslBrainrot.Speed = Value
+        SetupSpeedBypass()
+        Notify("Speed", Value and ("Speed: " .. _G.YslBrainrot.SpeedValue .. " 🚀") or "Disabled", 2)
     end,
 })
 
 MovementTab:CreateSection("🎈 Jump Controls")
 
 MovementTab:CreateToggle({
-    Name = "Infinite Jump (Fly Mode)",
+    Name = "Infinite Jump",
     CurrentValue = false,
     Flag = "InfJump",
     Callback = function(Value)
-        _G.YslSettings.Jump = Value
+        _G.YslBrainrot.InfJump = Value
     end,
 })
 
 MovementTab:CreateSlider({
     Name = "Jump Power",
-    Range = {50, 500},
+    Range = {50, 300},
     Increment = 10,
     CurrentValue = 50,
     Flag = "JumpPower",
     Callback = function(Value)
-        setHumanoidProperty("JumpPower", Value)
+        if humanoid then
+            humanoid.JumpPower = Value
+        end
     end,
 })
 
-MovementTab:CreateSection("👻 Phase Controls")
+MovementTab:CreateSection("👻 Phase")
 
 MovementTab:CreateToggle({
     Name = "🌙 No Clip (Walk Through Walls)",
     CurrentValue = false,
     Flag = "NoClip",
     Callback = function(Value)
-        _G.YslSettings.NoClip = Value
-        setupNoClip()
-        
-        Rayfield:Notify({
-            Title = "No Clip",
-            Content = Value and "Phase through walls enabled" or "Normal collision",
-            Duration = 2
-        })
+        _G.YslBrainrot.NoClip = Value
+        SetupNoClip()
+        Notify("No Clip", Value and "Phase mode ON 👻" or "OFF", 2)
     end,
 })
 
-MovementTab:CreateButton({
-    Name = "⚡ Super Jump (One Time)",
-    Callback = function()
-        humanoid.JumpPower = 200
-        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        task.wait(1)
-        humanoid.JumpPower = 50
-    end,
-})
-
---// 5. FARM TAB
-FarmTab:CreateSection("🧲 Smart Collection System")
-
-FarmTab:CreateToggle({
-    Name = "💎 Smart Coin Magnet (Radioactive Event)",
-    CurrentValue = false,
-    Flag = "CoinMagnet",
-    Callback = function(Value)
-        _G.YslSettings.Magnet = Value
-        setupSmartMagnet()
-        
-        if Value then
-            Rayfield:Notify({
-                Title = "Smart Magnet",
-                Content = "Collecting coins/radios ONLY (not players) 💰",
-                Duration = 3
-            })
-        end
-    end,
-})
-
-FarmTab:CreateSlider({
-    Name = "Magnet Speed (Lower = Faster)",
-    Range = {0.01, 0.5},
-    Increment = 0.01,
-    CurrentValue = 0.03,
-    Flag = "MagnetSpeed",
-    Callback = function(Value)
-        _G.YslSettings.MagnetSpeed = Value
-    end,
-})
-
-FarmTab:CreateToggle({
-    Name = "🎯 Auto Collect (TP to Coins)",
-    CurrentValue = false,
-    Flag = "AutoCollect",
-    Callback = function(Value)
-        _G.YslSettings.AutoCollect = Value
-        setupAutoCollect()
-        
-        if Value then
-            Rayfield:Notify({
-                Title = "Auto Collect",
-                Content = "Automatically teleporting to coins! 🎯",
-                Duration = 3
-            })
-        end
-    end,
-})
-
-FarmTab:CreateParagraph({
-    Title = "ℹ️ Smart Magnet Features",
-    Content = "✅ Collects: Coins, Radios, Money, Radioactive items\n✅ Detects: Green lights, particle effects\n❌ Ignores: Players, NPCs, random objects\n\nSafe & undetectable!"
-})
-
-FarmTab:CreateSection("📊 Collection Stats")
-
-FarmTab:CreateButton({
-    Name = "🔄 Reset Collection Stats",
-    Callback = function()
-        _G.YslSettings.CoinsCollected = 0
-        Rayfield:Notify({
-            Title = "Stats Reset",
-            Content = "Collection counter reset to 0",
-            Duration = 2
-        })
-    end,
-})
-
---// 6. PROTECTION TAB
-ProtectionTab:CreateSection("🛡️ Ultimate Defense")
+--// PROTECTION TAB
+ProtectionTab:CreateSection("🛡️ Wave Protection")
 
 ProtectionTab:CreateToggle({
-    Name = "⚡ GOD MODE (Infinite Health)",
-    CurrentValue = false,
-    Flag = "GodMode",
-    Callback = function(Value)
-        _G.YslSettings.GodMode = Value
-        
-        if Value then
-            humanoid.Health = humanoid.MaxHealth
-        end
-        
-        Rayfield:Notify({
-            Title = "God Mode",
-            Content = Value and "IMMORTAL MODE ACTIVATED 😈" or "God mode disabled",
-            Duration = 3
-        })
-    end,
-})
-
-ProtectionTab:CreateToggle({
-    Name = "🌊 ULTIMATE Wave Immunity (NO DEATH)",
-    CurrentValue = false,
+    Name = "🌊 ULTIMATE Wave Immunity",
+    CurrentValue = true,
     Flag = "WaveImmunity",
     Callback = function(Value)
-        _G.YslSettings.WaveImmunity = Value
-        setupUltimateWaveImmunity()
-        
-        Rayfield:Notify({
-            Title = "Wave Immunity",
-            Content = Value and "WAVES CAN'T KILL YOU ANYMORE 🌊" or "Wave protection off",
-            Duration = 4
-        })
-    end,
-})
-
-ProtectionTab:CreateToggle({
-    Name = "💧 Anti-Drown (Stay Alive in Water)",
-    CurrentValue = false,
-    Flag = "AntiDrown",
-    Callback = function(Value)
-        _G.YslSettings.AntiDrown = Value
-        
-        if Value then
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
-        else
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
-        end
-        
-        Rayfield:Notify({
-            Title = "Anti-Drown",
-            Content = Value and "Water can't drown you 💧" or "Normal swimming",
-            Duration = 2
-        })
-    end,
-})
-
-ProtectionTab:CreateSection("🔧 Utility")
-
-ProtectionTab:CreateButton({
-    Name = "💚 Instant Full Heal",
-    Callback = function()
-        humanoid.Health = humanoid.MaxHealth
-        Rayfield:Notify({
-            Title = "Healed",
-            Content = "HP: " .. math.floor(humanoid.MaxHealth) .. "/100 ❤️",
-            Duration = 2
-        })
+        _G.YslBrainrot.WaveImmunity = Value
+        SetupWaveImmunity()
+        Notify("Wave Immunity", Value and "IMMORTAL TO WAVES 🌊" or "Disabled", 3)
     end,
 })
 
 ProtectionTab:CreateButton({
-    Name = "🔥 Remove All Wave Parts",
+    Name = "🔥 Remove All Waves NOW",
     Callback = function()
-        Rayfield:Notify({
-            Title = "Removing Waves",
-            Content = "Deleting all wave objects...",
-            Duration = 2
-        })
-        
+        Notify("Removing Waves", "Deleting all tsunami waves...", 2)
         task.wait(0.5)
-        local count = 0
-        
-        pcall(function()
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    local name = v.Name:lower()
-                    if name:find("wave") or name:find("water") or name:find("tsunami") or 
-                       name:find("flood") or name:find("ocean") then
-                        v:Destroy()
-                        count = count + 1
-                    end
-                end
-            end
-            
-            -- Clear terrain water
-            Workspace.Terrain:Clear()
-        end)
-        
-        Rayfield:Notify({
-            Title = "Waves Deleted",
-            Content = "Destroyed " .. count .. " wave objects 🔥",
-            Duration = 3
-        })
+        local count = RemoveAllWaves()
+        Notify("Success", "Destroyed " .. count .. " wave objects! 🔥", 4)
     end,
 })
 
---// 7. BYPASS TAB (NEW)
-BypassTab:CreateSection("🔓 VIP & Door Bypass")
+ProtectionTab:CreateSection("💚 Health")
+
+ProtectionTab:CreateButton({
+    Name = "💚 Full Heal",
+    Callback = function()
+        if humanoid then
+            humanoid.Health = humanoid.MaxHealth
+            Notify("Healed", "HP: " .. humanoid.MaxHealth .. " ❤️", 2)
+        end
+    end,
+})
+
+--// BYPASS TAB
+BypassTab:CreateSection("🔓 VIP Door Bypass")
+
+BypassTab:CreateParagraph({
+    Title = "ℹ️ VIP Bypass Info",
+    Content = "✅ OPTIMIZED - No more lag!\n✅ Only checks doors within 50 studs\n✅ Auto-restores far doors\n✅ Checks every 2 seconds (not every frame)\n\nThis saves MASSIVE performance!"
+})
 
 BypassTab:CreateToggle({
-    Name = "👑 VIP Door Bypass (Walk Through)",
+    Name = "👑 Enable VIP Door Bypass (LAG-FREE)",
     CurrentValue = false,
     Flag = "VIPBypass",
     Callback = function(Value)
-        _G.YslSettings.VIPBypass = Value
-        setupVIPDoorBypass()
-        
-        Rayfield:Notify({
-            Title = "VIP Bypass",
-            Content = Value and "All VIP doors unlocked 👑" or "VIP bypass off",
-            Duration = 3
-        })
+        _G.YslBrainrot.VIPBypass = Value
+        SetupVIPBypass()
+        Notify("VIP Bypass", Value and "All VIP doors unlocked! (Optimized) 👑" or "OFF", 3)
     end,
 })
 
-BypassTab:CreateButton({
-    Name = "🚪 Open All Nearby Doors (30 studs)",
-    Callback = function()
-        local count = 0
-        pcall(function()
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    local name = v.Name:lower()
-                    if name:find("door") or name:find("gate") then
-                        local distance = (v.Position - rootPart.Position).Magnitude
-                        if distance < 30 then
-                            v.CanCollide = false
-                            v.Transparency = 0.5
-                            count = count + 1
-                        end
-                    end
-                end
-            end
-        end)
-        
-        Rayfield:Notify({
-            Title = "Doors Opened",
-            Content = "Opened " .. count .. " nearby doors 🚪",
-            Duration = 3
-        })
-    end,
-})
-
-BypassTab:CreateButton({
-    Name = "🔓 Disable All ProximityPrompts",
-    Callback = function()
-        local count = 0
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then
-                v.Enabled = false
-                v.MaxActivationDistance = 0
-                count = count + 1
-            end
-        end
-        
-        Rayfield:Notify({
-            Title = "Prompts Disabled",
-            Content = "Disabled " .. count .. " proximity prompts",
-            Duration = 3
-        })
+BypassTab:CreateSlider({
+    Name = "Check Interval (Seconds)",
+    Range = {0.5, 5},
+    Increment = 0.5,
+    CurrentValue = 2,
+    Flag = "VIPInterval",
+    Callback = function(Value)
+        _G.YslBrainrot.VIPCheckInterval = Value
+        Notify("VIP Settings", "Check interval: " .. Value .. "s", 2)
     end,
 })
 
 BypassTab:CreateSection("🗑️ Object Removal")
 
 BypassTab:CreateButton({
-    Name = "Remove All Obstacles",
+    Name = "Remove All Barriers",
     Callback = function()
         local removed = 0
-        pcall(function()
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") and v.CanCollide then
-                    local name = v.Name:lower()
-                    if name:find("wall") or name:find("block") or name:find("obstacle") or
-                       name:find("barrier") then
-                        v:Destroy()
-                        removed = removed + 1
-                    end
-                end
-            end
-        end)
-        
-        Rayfield:Notify({
-            Title = "Obstacles Removed",
-            Content = "Deleted " .. removed .. " obstacles 🗑️",
-            Duration = 3
-        })
-    end,
-})
-
---// 8. TELEPORT TAB
-TeleportTab:CreateSection("🎯 Quick Teleports")
-
-TeleportTab:CreateButton({
-    Name = "🏁 Teleport to Win/End Zone",
-    Callback = function()
-        local found = false
-        pcall(function()
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    local name = v.Name:lower()
-                    if name:find("win") or name:find("end") or name:find("finish") or 
-                       name:find("safe") or name:find("goal") then
-                        rootPart.CFrame = v.CFrame + Vector3.new(0, 5, 0)
-                        found = true
-                        Rayfield:Notify({
-                            Title = "Teleported",
-                            Content = "Warped to: " .. v.Name .. " 🏁",
-                            Duration = 3
-                        })
-                        break
-                    end
-                end
-            end
-        end)
-        
-        if not found then
-            Rayfield:Notify({
-                Title = "Error",
-                Content = "Win zone not found in workspace",
-                Duration = 3
-            })
-        end
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "📍 Teleport to Highest Point",
-    Callback = function()
-        local highestY = -math.huge
-        local safePart = nil
-        
         for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") and v.Anchored and v.Position.Y > highestY then
-                highestY = v.Position.Y
-                safePart = v
-            end
-        end
-        
-        if safePart then
-            rootPart.CFrame = CFrame.new(safePart.Position + Vector3.new(0, 10, 0))
-            Rayfield:Notify({
-                Title = "Teleported",
-                Content = "Safe spot (Height: " .. math.floor(highestY) .. ") 📍",
-                Duration = 3
-            })
-        end
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "🔁 Return to Spawn",
-    Callback = function()
-        local spawn = Workspace:FindFirstChild("SpawnLocation") or 
-                      Workspace:FindFirstChild("Spawn") or
-                      Workspace:FindFirstChild("Spawns")
-        
-        if spawn then
-            rootPart.CFrame = spawn.CFrame + Vector3.new(0, 5, 0)
-        else
-            rootPart.CFrame = CFrame.new(0, 50, 0)
-        end
-        
-        Rayfield:Notify({
-            Title = "Teleported",
-            Content = "Returned to spawn point 🔁",
-            Duration = 2
-        })
-    end,
-})
-
-TeleportTab:CreateSection("💰 Event Teleports")
-
-TeleportTab:CreateButton({
-    Name = "☢️ Teleport to Radioactive Event",
-    Callback = function()
-        local found = false
-        -- Look for radioactive particles/lights
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("PointLight") then
-                if v.Color == Color3.fromRGB(0, 255, 0) or v.Brightness > 3 then
-                    if v.Parent and v.Parent:IsA("BasePart") then
-                        rootPart.CFrame = v.Parent.CFrame + Vector3.new(0, 10, 0)
-                        found = true
-                        Rayfield:Notify({
-                            Title = "Teleported",
-                            Content = "Warped to radioactive event ☢️",
-                            Duration = 3
-                        })
-                        break
-                    end
+            if v:IsA("BasePart") and v.CanCollide then
+                if v.Name:lower():find("wall") or v.Name:lower():find("barrier") then
+                    v:Destroy()
+                    removed = removed + 1
                 end
             end
         end
-        
-        if not found then
-            Rayfield:Notify({
-                Title = "Error",
-                Content = "Radioactive event not active",
-                Duration = 3
-            })
-        end
+        Notify("Cleanup", "Removed " .. removed .. " barriers 🗑️", 3)
     end,
 })
 
---// 9. VISUAL TAB
-VisualTab:CreateSection("🎨 Visual Enhancements")
+--// AUTO FEATURES TAB
+AutoTab:CreateSection("🤖 Auto Systems")
 
-VisualTab:CreateToggle({
-    Name = "🌅 Remove Fog",
+AutoTab:CreateToggle({
+    Name = "🔄 Auto-Rebirth",
     CurrentValue = false,
-    Flag = "NoFog",
+    Flag = "AutoRebirth",
     Callback = function(Value)
+        _G.YslBrainrot.AutoRebirth = Value
         if Value then
-            game.Lighting.FogEnd = 100000
-            game.Lighting.FogStart = 0
-        else
-            game.Lighting.FogEnd = 1000
-            game.Lighting.FogStart = 0
+            SetupAutoRebirth()
+            Notify("Auto Rebirth", "Will rebirth at " .. _G.YslBrainrot.RebirthAt .. " speed!", 3)
         end
     end,
 })
 
-VisualTab:CreateButton({
+AutoTab:CreateSlider({
+    Name = "Rebirth At Speed",
+    Range = {100, 1000},
+    Increment = 10,
+    CurrentValue = 300,
+    Flag = "RebirthSpeed",
+    Callback = function(Value)
+        _G.YslBrainrot.RebirthAt = Value
+    end,
+})
+
+AutoTab:CreateSection("⚡ Auto Upgrades")
+
+AutoTab:CreateToggle({
+    Name = "⚡ Auto-Upgrade Speed",
+    CurrentValue = false,
+    Flag = "AutoSpeed",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoUpgradeSpeed = Value
+        
+        if Value then
+            task.spawn(function()
+                while _G.YslBrainrot.AutoUpgradeSpeed do
+                    pcall(function()
+                        local speedShop = Workspace:FindFirstChild("SpeedShop")
+                        if speedShop then
+                            local button = speedShop:FindFirstChild("BuyButton")
+                            if button and button:FindFirstChildOfClass("ClickDetector") then
+                                fireclickdetector(button:FindFirstChildOfClass("ClickDetector"))
+                            end
+                        end
+                    end)
+                    task.wait(1)
+                end
+            end)
+        end
+    end,
+})
+
+AutoTab:CreateToggle({
+    Name = "🎒 Auto-Upgrade Carry Capacity",
+    CurrentValue = false,
+    Flag = "AutoCarry",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoUpgradeCarry = Value
+        
+        if Value then
+            task.spawn(function()
+                while _G.YslBrainrot.AutoUpgradeCarry do
+                    pcall(function()
+                        local carryShop = Workspace:FindFirstChild("CarryShop")
+                        if carryShop then
+                            local button = carryShop:FindFirstChild("BuyButton")
+                            if button and button:FindFirstChildOfClass("ClickDetector") then
+                                fireclickdetector(button:FindFirstChildOfClass("ClickDetector"))
+                            end
+                        end
+                    end)
+                    task.wait(1)
+                end
+            end)
+        end
+    end,
+})
+
+--// ESP TAB
+ESPTab:CreateSection("👁️ Visual ESP")
+
+ESPTab:CreateToggle({
+    Name = "🧠 Brainrot ESP",
+    CurrentValue = false,
+    Flag = "BrainrotESP",
+    Callback = function(Value)
+        _G.YslBrainrot.BrainrotESP = Value
+        SetupBrainrotESP()
+    end,
+})
+
+ESPTab:CreateToggle({
+    Name = "🟢 Safe Zone ESP",
+    CurrentValue = false,
+    Flag = "SafezoneESP",
+    Callback = function(Value)
+        _G.YslBrainrot.SafezoneESP = Value
+        SetupSafezoneESP()
+    end,
+})
+
+ESPTab:CreateToggle({
+    Name = "☢️ Radioactive Coin ESP",
+    CurrentValue = false,
+    Flag = "RadCoinESP",
+    Callback = function(Value)
+        _G.YslBrainrot.RadCoinESP = Value
+        
+        if Value then
+            task.spawn(function()
+                while _G.YslBrainrot.RadCoinESP do
+                    for _, v in pairs(Workspace:GetDescendants()) do
+                        if v:IsA("BasePart") and v.Name:lower():find("radioactive") then
+                            if not v:FindFirstChild("YslESP") then
+                                CreateESP(v, Color3.fromRGB(0, 255, 0), "RAD COIN")
+                            end
+                        end
+                    end
+                    task.wait(2)
+                end
+            end)
+        else
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v.Name == "YslESP" then v:Destroy() end
+            end
+        end
+    end,
+})
+
+ESPTab:CreateSection("🎨 Visual Tweaks")
+
+ESPTab:CreateButton({
     Name = "☀️ Full Brightness",
     Callback = function()
         game.Lighting.Brightness = 3
         game.Lighting.ClockTime = 12
+        game.Lighting.FogEnd = 100000
         game.Lighting.GlobalShadows = false
-        game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
-        game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-        
-        Rayfield:Notify({
-            Title = "Brightness",
-            Content = "Full brightness enabled ☀️",
-            Duration = 2
-        })
+        Notify("Brightness", "Max brightness enabled ☀️", 2)
     end,
 })
 
-VisualTab:CreateButton({
-    Name = "🌙 Night Mode",
-    Callback = function()
-        game.Lighting.ClockTime = 0
-        game.Lighting.Brightness = 1
-        
-        Rayfield:Notify({
-            Title = "Night Mode",
-            Content = "Dark mode activated 🌙",
-            Duration = 2
-        })
-    end,
-})
-
-VisualTab:CreateButton({
-    Name = "🧹 Clean Workspace (Remove Lag)",
+ESPTab:CreateButton({
+    Name = "🧹 Remove Lag (Clear Effects)",
     Callback = function()
         local removed = 0
         for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or
-               v:IsA("Fire") or v:IsA("Sparkles") then
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
                 v:Destroy()
                 removed = removed + 1
             end
         end
-        
-        Rayfield:Notify({
-            Title = "Cleanup",
-            Content = "Removed " .. removed .. " visual effects 🧹",
-            Duration = 3
-        })
+        Notify("Cleanup", "Removed " .. removed .. " effects 🧹", 2)
     end,
 })
 
-VisualTab:CreateSection("🎯 ESP Features")
-
-VisualTab:CreateButton({
-    Name = "💰 Highlight All Coins",
-    Callback = function()
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
-                local name = v.Name:lower()
-                if name:find("coin") or name:find("radio") then
-                    local highlight = Instance.new("SelectionBox")
-                    highlight.Parent = v
-                    highlight.Adornee = v
-                    highlight.LineThickness = 0.1
-                    highlight.Color3 = Color3.fromRGB(255, 255, 0)
-                end
-            end
-        end
-        
-        Rayfield:Notify({
-            Title = "ESP",
-            Content = "All coins highlighted in yellow 💰",
-            Duration = 3
-        })
-    end,
-})
-
---// 10. INFO TAB
-InfoTab:CreateSection("📖 YslMenu Information")
+--// INFO TAB
+InfoTab:CreateSection("📖 Script Information")
 
 InfoTab:CreateParagraph({
-    Title = "⚡ Version Information",
-    Content = "Script: YslMenu V106 GODLIKE\nCreator: yslscripts\nRelease: 2026\nStatus: ULTIMATE EDITION"
+    Title = "⚡ YslMenu V107",
+    Content = "The ULTIMATE script for Escape Tsunami For Brainrots!\n\nVersion: V107 ULTIMATE\nCreator: yslscripts\nGame: Escape Tsunami For Brainrots\n\n😈 ysl on top"
 })
 
 InfoTab:CreateParagraph({
     Title = "✨ Features",
-    Content = "• VIP Door Bypass\n• Wave Immunity (NO DEATH)\n• Smart Coin Magnet\n• Speed Bypass (2000 max)\n• God Mode\n• Auto Collect\n• No Clip\n• And much more..."
+    Content = "✅ Wave Immunity (5 protection methods)\n✅ VIP Bypass (LAG-FREE optimization)\n✅ Auto-Collect Brainrots (All rarities)\n✅ Radioactive Event Farm\n✅ Auto-Complete Obby\n✅ Bombardiro Bomb Farm\n✅ Auto-Spin Wheel\n✅ Auto-Rebirth System\n✅ ESP Systems\n✅ Speed up to 2000\n✅ Smart Collection Filters"
 })
 
 InfoTab:CreateParagraph({
-    Title = "🔥 What's New in V106",
-    Content = "✅ TRUE wave immunity (won't die)\n✅ VIP door bypass system\n✅ Enhanced speed (3 methods)\n✅ Smart magnet (only coins/radios)\n✅ Auto collect feature\n✅ Better UI organization\n✅ Live statistics\n✅ Panic mode button"
+    Title = "🔥 What's New",
+    Content = "V107 Changes:\n• VIP Bypass OPTIMIZED (no more lag!)\n• Radioactive event auto-farm\n• Bombardiro bomb destroyer\n• Auto-complete obby\n• Mutation-only filter\n• Rarity selection\n• Auto-rebirth system\n• Safe zone ESP\n• Performance improvements"
+})
+
+InfoTab:CreateSection("🎮 Game Tips")
+
+InfoTab:CreateParagraph({
+    Title = "💡 Pro Tips",
+    Content = "1. Use Wave Immunity before going far\n2. Enable VIP Bypass to access safe zones\n3. Set Auto-Collect to 'Celestial' for best income\n4. During Radioactive Event, enable Auto-Obby + Bomb Farm\n5. Auto-Rebirth at 300 speed is optimal\n6. Use Safe Zone ESP to find hiding spots\n7. Speed 200-300 is perfect for Celestial zone"
 })
 
 InfoTab:CreateSection("🔗 Links")
 
 InfoTab:CreateButton({
-    Name = "📋 Copy Discord Server",
+    Name = "📋 Copy Discord",
     Callback = function()
         setclipboard("discord.gg/yslscripts")
-        Rayfield:Notify({
-            Title = "Copied",
-            Content = "Discord link copied: discord.gg/yslscripts",
-            Duration = 3
-        })
+        Notify("Copied", "Discord: discord.gg/yslscripts", 3)
     end,
 })
-
-InfoTab:CreateButton({
-    Name = "🌐 Copy Script Link",
-    Callback = function()
-        setclipboard("https://yslscripts.com")
-        Rayfield:Notify({
-            Title = "Copied",
-            Content = "Script link copied to clipboard",
-            Duration = 3
-        })
-    end,
-})
-
-InfoTab:CreateSection("⚙️ Utilities")
 
 InfoTab:CreateButton({
     Name = "🔄 Respawn Character",
     Callback = function()
         lplayer.Character:BreakJoints()
-        
-        Rayfield:Notify({
-            Title = "Respawn",
-            Content = "Respawning character...",
-            Duration = 2
-        })
     end,
 })
 
-InfoTab:CreateButton({
-    Name = "🗑️ Destroy GUI",
-    Callback = function()
-        Rayfield:Destroy()
-    end,
-})
-
---// 11. INFINITE JUMP HANDLER
+--// INFINITE JUMP HANDLER
 UserInputService.JumpRequest:Connect(function()
-    if _G.YslSettings.Jump and humanoid then
+    if _G.YslBrainrot.InfJump and humanoid then
         pcall(function()
             humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end)
     end
 end)
 
---// 12. CHARACTER RESPAWN HANDLER
-lplayer.CharacterAdded:Connect(function(newCharacter)
+--// CHARACTER RESPAWN HANDLER
+lplayer.CharacterAdded:Connect(function(newChar)
     task.wait(1)
-    character = newCharacter
-    humanoid = newCharacter:WaitForChild("Humanoid")
-    rootPart = newCharacter:WaitForChild("HumanoidRootPart")
+    character = newChar
+    humanoid = newChar:WaitForChild("Humanoid")
+    rootPart = newChar:WaitForChild("HumanoidRootPart")
     
     -- Reapply all active features
-    if _G.YslSettings.WaveImmunity then
-        setupUltimateWaveImmunity()
-    end
-    if _G.YslSettings.VIPBypass then
-        setupVIPDoorBypass()
-    end
-    if _G.YslSettings.Speeding then
-        setupSpeedBypass()
-    end
-    if _G.YslSettings.NoClip then
-        setupNoClip()
-    end
-    if _G.YslSettings.Magnet then
-        setupSmartMagnet()
-    end
-    if _G.YslSettings.AutoCollect then
-        setupAutoCollect()
-    end
+    if _G.YslBrainrot.WaveImmunity then SetupWaveImmunity() end
+    if _G.YslBrainrot.VIPBypass then SetupVIPBypass() end
+    if _G.YslBrainrot.Speed then SetupSpeedBypass() end
+    if _G.YslBrainrot.NoClip then SetupNoClip() end
+    if _G.YslBrainrot.AutoCollectBrainrots then SetupAutoCollectBrainrots() end
+    if _G.YslBrainrot.AutoCollectRadCoins then SetupAutoCollectRadCoins() end
+    if _G.YslBrainrot.AutoDestroyBombs then SetupAutoDestroyBombs() end
     
-    Rayfield:Notify({
-        Title = "Character Respawned",
-        Content = "All features reapplied ✅",
-        Duration = 3
-    })
+    Notify("Respawned", "All features reapplied ✅", 2)
 end)
 
---// 13. FINAL LOAD NOTIFICATION
-Rayfield:Notify({
-    Title = "⚡ YslMenu V106 LOADED ⚡",
-    Content = "VIP Bypass | Wave Immunity | Smart Magnet\nALL SYSTEMS ONLINE 😈",
-    Duration = 6,
-    Image = 4483362458
-})
+--// FINAL NOTIFICATION
+Notify("⚡ YslMenu V107 Loaded!", "All systems online! Wave immunity, VIP bypass, radioactive farm ready! 😈", 6)
 
 print("═══════════════════════════════════════")
-print("  YslMenu V106 - GODLIKE EDITION")
+print("  YslMenu V107 - BRAINROT MASTER")
 print("═══════════════════════════════════════")
-print("✅ Wave Immunity: ACTIVE (NO DEATH)")
-print("✅ VIP Door Bypass: READY")
-print("✅ Smart Coin Magnet: READY")
-print("✅ Speed Bypass: READY (Multi-method)")
-print("✅ God Mode: AVAILABLE")
-print("✅ Auto Collect: AVAILABLE")
+print("✅ Wave Immunity: ACTIVE")
+print("✅ VIP Bypass: OPTIMIZED (Lag-free)")
+print("✅ Auto-Collect: READY")
+print("✅ Radioactive Farm: READY")
+print("✅ Auto-Rebirth: READY")
+print("✅ ESP Systems: READY")
 print("═══════════════════════════════════════")
 print("🔥 ysl on top 😈")
 print("═══════════════════════════════════════")
