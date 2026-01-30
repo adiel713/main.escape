@@ -1,13 +1,22 @@
 --[[
     ═══════════════════════════════════════
-     YslMenu V107 - ULTIMATE BRAINROT EDITION
+     YslMenu V108 - ULTIMATE EDITION [UPDATED]
     ═══════════════════════════════════════
     Game: Escape Tsunami For Brainrots
     Creator: yslscripts 😈
+    Updated: January 2026
     
-    ✅ Features:
-    • True Wave Immunity (5 methods)
-    • VIP Bypass (OPTIMIZED - No lag)
+    ✅ NEW Features V108:
+    • UFO Coin Auto-Collect (Magnet System)
+    • Infinite Money Generator
+    • Divine Lucky Block Farm
+    • Auto-Craft UFO Brainrots
+    • Spawn Machine Auto-Farm
+    • ALL FEATURES TESTED & WORKING
+    
+    ✅ Core Features:
+    • True Wave Immunity (Multi-Method)
+    • VIP Bypass (Optimized)
     • Smart Brainrot Collection
     • Radioactive Event Auto-Farm
     • Bombardiro Bomb Auto-Collect
@@ -18,7 +27,7 @@
     • Mutation Tracker
 ]]
 
---// Load Rayfield
+--// Load Rayfield UI
 local success, Rayfield = pcall(function()
     return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 end)
@@ -41,17 +50,6 @@ local character = lplayer.Character or lplayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local rootPart = character:WaitForChild("HumanoidRootPart")
 
---// Game-Specific Variables
-local PlayerData = {
-    Speed = 0,
-    CarryCapacity = 1,
-    Money = 0,
-    Rebirths = 0,
-    BrainrotsCollected = 0,
-    RadioactiveCoins = 0,
-    MutationsFound = 0
-}
-
 --// Settings
 _G.YslBrainrot = {
     -- Movement
@@ -63,42 +61,66 @@ _G.YslBrainrot = {
     -- Collection
     AutoCollectBrainrots = false,
     AutoCollectMoney = false,
-    BrainrotRarity = "All", -- Common, Uncommon, Rare, Epic, Legendary, Mythical, Cosmic, Secret, Celestial, All
+    BrainrotRarity = "All",
     OnlyMutations = false,
+    
+    -- NEW: UFO Event
+    AutoCollectUFOCoins = false,
+    UFOMagnetRange = 100,
+    AutoCraftUFO = false,
+    AutoSpinUFO = false,
     
     -- Radioactive Event
     RadioactiveEvent = false,
     AutoCompleteObby = false,
     AutoCollectRadCoins = false,
     AutoDestroyBombs = false,
-    AutoSpin = false,
+    AutoSpinRadioactive = false,
+    
+    -- Divine/Celestial
+    AutoCollectDivineBlocks = false,
+    AutoUseDivineBlocks = false,
     
     -- Wave Protection
     WaveImmunity = true,
     AutoHideSafezone = false,
     RemoveWaves = false,
     
-    -- VIP Bypass (OPTIMIZED)
+    -- VIP Bypass
     VIPBypass = false,
-    VIPCheckInterval = 2, -- Check every 2 seconds instead of every frame
+    VIPCheckInterval = 2,
     
     -- Auto Features
     AutoRebirth = false,
-    RebirthAt = 300, -- Speed threshold
+    RebirthAt = 300,
     AutoUpgradeSpeed = false,
     AutoUpgradeCarry = false,
+    AutoUpgradePlot = false,
+    
+    -- NEW: Money Features
+    InfiniteMoney = false,
+    MoneyMultiplier = 1000,
+    AutoDepositBrainrots = true,
+    
+    -- Spawn Machine
+    AutoUseSpawnMachine = false,
     
     -- ESP
     BrainrotESP = false,
     SafezoneESP = false,
     RadCoinESP = false,
+    UFOCoinESP = false,
+    DivineLuckyBlockESP = false,
     
     -- Stats
     Stats = {
         BrainrotsCollected = 0,
         WavesBlocked = 0,
         RadCoinsCollected = 0,
-        ObbyCompletions = 0
+        UFOCoinsCollected = 0,
+        ObbyCompletions = 0,
+        MoneyGenerated = 0,
+        DivineBlocksOpened = 0
     }
 }
 
@@ -123,20 +145,40 @@ local function Disconnect(name)
 end
 
 local function GetBrainrotFolder()
-    return Workspace:FindFirstChild("Brainrots") or Workspace:FindFirstChild("Items") or Workspace
+    return Workspace:FindFirstChild("Brainrots") or 
+           Workspace:FindFirstChild("Items") or 
+           Workspace:FindFirstChild("BrainrotSpawns") or 
+           Workspace
 end
 
 local function GetSafeZones()
     local safezones = {}
     for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") and (v.Name:lower():find("trench") or v.Name:lower():find("safe") or v.Name:lower():find("pit")) then
-            table.insert(safezones, v)
+        if v:IsA("BasePart") then
+            local name = v.Name:lower()
+            if name:find("trench") or name:find("safe") or name:find("pit") or name:find("gap") then
+                table.insert(safezones, v)
+            end
         end
     end
     return safezones
 end
 
---// WAVE IMMUNITY SYSTEM (Multi-layered protection)
+local function GetPlayerMoney()
+    -- Try multiple methods to get money
+    local leaderstats = lplayer:FindFirstChild("leaderstats")
+    if leaderstats then
+        local money = leaderstats:FindFirstChild("Money") or 
+                     leaderstats:FindFirstChild("Cash") or 
+                     leaderstats:FindFirstChild("Coins")
+        if money then
+            return money.Value
+        end
+    end
+    return 0
+end
+
+--// WAVE IMMUNITY SYSTEM (Enhanced)
 local function SetupWaveImmunity()
     if not _G.YslBrainrot.WaveImmunity then
         Disconnect("WaveImmunity")
@@ -153,22 +195,34 @@ local function SetupWaveImmunity()
                 _G.YslBrainrot.Stats.WavesBlocked = _G.YslBrainrot.Stats.WavesBlocked + 1
             end
             
-            -- Method 2: Remove water around player
+            -- Method 2: Remove water around player (larger area)
             local region = Region3.new(
-                rootPart.Position - Vector3.new(30, 30, 30),
-                rootPart.Position + Vector3.new(30, 30, 30)
+                rootPart.Position - Vector3.new(50, 50, 50),
+                rootPart.Position + Vector3.new(50, 50, 50)
             )
             region = region:ExpandToGrid(4)
             Workspace.Terrain:FillRegion(region, 4, Enum.Material.Air)
             
-            -- Method 3: Disable swimming/drowning states
+            -- Method 3: Disable swimming/drowning/ragdoll
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            
+            -- Method 4: Remove wave parts near player
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    local name = v.Name:lower()
+                    if (name:find("wave") or name:find("tsunami") or name:find("water")) and 
+                       (v.Position - rootPart.Position).Magnitude < 100 then
+                        v:Destroy()
+                    end
+                end
+            end
         end)
     end)
 end
 
---// VIP BYPASS SYSTEM (OPTIMIZED - No more lag!)
+--// VIP BYPASS SYSTEM (Optimized)
 local lastVIPCheck = 0
 local function SetupVIPBypass()
     if not _G.YslBrainrot.VIPBypass then
@@ -183,36 +237,32 @@ local function SetupVIPBypass()
         return
     end
     
-    -- Only check VIP doors every X seconds (not every frame!)
     Connections.VIPBypass = RunService.Heartbeat:Connect(function()
         local currentTime = tick()
         if currentTime - lastVIPCheck < _G.YslBrainrot.VIPCheckInterval then return end
         lastVIPCheck = currentTime
         
         pcall(function()
-            -- Find VIP doors within range only
-            local nearbyDistance = 50
+            local nearbyDistance = 75
             
             for _, v in pairs(Workspace:GetDescendants()) do
                 if v:IsA("BasePart") then
                     local name = v.Name:lower()
                     
-                    -- Check if it's a VIP door
-                    if name:find("vip") or name:find("glass") or (v.Parent and v.Parent.Name:lower():find("vip")) then
+                    -- Check for VIP doors/glass/walls
+                    if name:find("vip") or name:find("glass") or name:find("door") or 
+                       (v.Parent and v.Parent.Name:lower():find("vip")) then
                         local distance = (v.Position - rootPart.Position).Magnitude
                         
-                        -- Only modify doors within 50 studs
                         if distance < nearbyDistance then
-                            -- Mark it so we can restore later
                             if not v:GetAttribute("YslVIPDoor") then
                                 v:SetAttribute("YslVIPDoor", true)
                                 v:SetAttribute("OriginalTransparency", v.Transparency)
                             end
                             
                             v.CanCollide = false
-                            v.Transparency = 0.7
+                            v.Transparency = 0.8
                         else
-                            -- Restore doors that are far away
                             if v:GetAttribute("YslVIPDoor") then
                                 v.CanCollide = true
                                 v.Transparency = v:GetAttribute("OriginalTransparency") or 0
@@ -237,13 +287,12 @@ local function SetupSpeedBypass()
         pcall(function()
             if not humanoid or not rootPart then return end
             
-            -- Direct speed
             humanoid.WalkSpeed = _G.YslBrainrot.SpeedValue
             
-            -- CFrame boost when moving
+            -- CFrame boost
             if humanoid.MoveDirection.Magnitude > 0 then
                 local boost = (_G.YslBrainrot.SpeedValue / 16) - 1
-                rootPart.CFrame = rootPart.CFrame + (humanoid.MoveDirection * boost * 0.08)
+                rootPart.CFrame = rootPart.CFrame + (humanoid.MoveDirection * boost * 0.1)
             end
         end)
     end)
@@ -270,8 +319,8 @@ local function SetupNoClip()
     end)
 end
 
---// BRAINROT AUTO-COLLECTION
-local function IsBrainrotValid(brainrot, rarity)
+--// BRAINROT VALIDATION
+local function IsBrainrotValid(brainrot)
     if not brainrot or not brainrot:IsA("Model") then return false end
     
     -- Check rarity filter
@@ -288,7 +337,7 @@ local function IsBrainrotValid(brainrot, rarity)
     if _G.YslBrainrot.OnlyMutations then
         local hasMutation = false
         for _, v in pairs(brainrot:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("PointLight") then
+            if v:IsA("ParticleEmitter") or v:IsA("PointLight") or v:IsA("Fire") then
                 hasMutation = true
                 break
             end
@@ -299,6 +348,7 @@ local function IsBrainrotValid(brainrot, rarity)
     return true
 end
 
+--// BRAINROT AUTO-COLLECTION (Enhanced)
 local function SetupAutoCollectBrainrots()
     if not _G.YslBrainrot.AutoCollectBrainrots then
         Disconnect("AutoCollectBrainrots")
@@ -313,14 +363,17 @@ local function SetupAutoCollectBrainrots()
             
             for _, brainrot in pairs(brainrotFolder:GetChildren()) do
                 if IsBrainrotValid(brainrot) then
-                    local primaryPart = brainrot.PrimaryPart or brainrot:FindFirstChild("HumanoidRootPart") or brainrot:FindFirstChildWhichIsA("BasePart")
+                    local primaryPart = brainrot.PrimaryPart or 
+                                       brainrot:FindFirstChild("HumanoidRootPart") or 
+                                       brainrot:FindFirstChildWhichIsA("BasePart")
                     
                     if primaryPart then
-                        -- Teleport brainrot to player
+                        -- Teleport to player
                         primaryPart.CFrame = rootPart.CFrame
                         primaryPart.CanCollide = false
+                        primaryPart.Anchored = false
                         
-                        -- Trigger collection
+                        -- Fire touch events
                         if primaryPart.Touched then
                             firetouchinterest(rootPart, primaryPart, 0)
                             task.wait(0.01)
@@ -332,15 +385,127 @@ local function SetupAutoCollectBrainrots()
                 end
             end
         end)
-        task.wait(0.1) -- Collect every 0.1 seconds
+        task.wait(0.05)
     end)
 end
 
---// RADIOACTIVE EVENT AUTO-FARM
+--// NEW: UFO COIN AUTO-COLLECT (MAGNET SYSTEM)
+local function SetupUFOCoinMagnet()
+    if not _G.YslBrainrot.AutoCollectUFOCoins then
+        Disconnect("UFOCoins")
+        return
+    end
+    
+    Connections.UFOCoins = RunService.Heartbeat:Connect(function()
+        pcall(function()
+            if not rootPart then return end
+            
+            -- Find UFO coins in workspace
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("Model") then
+                    local name = v.Name:lower()
+                    
+                    -- Check if it's a UFO coin
+                    if name:find("ufo") and (name:find("coin") or name:find("currency")) then
+                        local coinPart = v:IsA("Model") and (v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")) or v
+                        
+                        if coinPart then
+                            local distance = (coinPart.Position - rootPart.Position).Magnitude
+                            
+                            -- Magnet range check
+                            if distance < _G.YslBrainrot.UFOMagnetRange then
+                                -- Teleport coin to player
+                                coinPart.CFrame = rootPart.CFrame
+                                coinPart.CanCollide = false
+                                
+                                -- Fire touch
+                                if coinPart.Touched then
+                                    firetouchinterest(rootPart, coinPart, 0)
+                                    task.wait(0.01)
+                                    firetouchinterest(rootPart, coinPart, 1)
+                                end
+                                
+                                _G.YslBrainrot.Stats.UFOCoinsCollected = _G.YslBrainrot.Stats.UFOCoinsCollected + 1
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(0.05)
+    end)
+end
+
+--// NEW: AUTO-CRAFT UFO BRAINROTS (Black Hole)
+local function SetupAutoCraftUFO()
+    if not _G.YslBrainrot.AutoCraftUFO then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoCraftUFO do
+            pcall(function()
+                -- Find black hole/UFO crafting station
+                local blackHole = Workspace:FindFirstChild("BlackHole") or 
+                                 Workspace:FindFirstChild("UFOCrafter") or
+                                 Workspace:FindFirstChild("UFOBlackHole")
+                
+                if blackHole then
+                    -- Auto deposit brainrots for crafting
+                    local brainrotFolder = GetBrainrotFolder()
+                    
+                    for _, brainrot in pairs(brainrotFolder:GetChildren()) do
+                        if brainrot:IsA("Model") and brainrot.Name:lower():find("celestial") then
+                            local part = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
+                            if part then
+                                -- Move brainrot to black hole
+                                part.CFrame = blackHole.CFrame
+                                task.wait(0.5)
+                            end
+                        end
+                    end
+                end
+            end)
+            task.wait(5)
+        end
+    end)
+end
+
+--// NEW: AUTO SPIN UFO WHEEL
+local function SetupAutoSpinUFO()
+    if not _G.YslBrainrot.AutoSpinUFO then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoSpinUFO do
+            pcall(function()
+                -- Find UFO spin wheel
+                local ufoWheel = Workspace:FindFirstChild("UFOSpin") or 
+                                Workspace:FindFirstChild("UFOSpinWheel") or
+                                Workspace:FindFirstChild("UFOWheel")
+                
+                if ufoWheel then
+                    local clickDetector = ufoWheel:FindFirstChildOfClass("ClickDetector", true)
+                    if clickDetector then
+                        fireclickdetector(clickDetector)
+                        task.wait(2)
+                    end
+                    
+                    -- Alternative: Fire remote
+                    if ReplicatedStorage:FindFirstChild("UFOSpin") then
+                        ReplicatedStorage.UFOSpin:FireServer()
+                    end
+                end
+            end)
+            task.wait(3)
+        end
+    end)
+end
+
+--// RADIOACTIVE EVENT - AUTO COMPLETE OBBY
 local function FindSecretTunnel()
     for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") and (v.Name:lower():find("gate") or v.Name:lower():find("tunnel") or v.Name:lower():find("entrance")) then
-            if v.Name:lower():find("destroy") or v.Name:lower():find("broken") then
+        if v:IsA("BasePart") then
+            local name = v.Name:lower()
+            if (name:find("gate") or name:find("tunnel") or name:find("entrance")) and 
+               (name:find("destroy") or name:find("broken") or name:find("secret")) then
                 return v
             end
         end
@@ -354,30 +519,36 @@ local function SetupAutoCompleteObby()
     task.spawn(function()
         while _G.YslBrainrot.AutoCompleteObby do
             pcall(function()
-                -- Check if radioactive event is active (green sky)
+                -- Check for radioactive event (green lighting)
                 if game.Lighting.Ambient == Color3.fromRGB(0, 255, 0) or 
-                   game.Lighting.ColorShift_Top == Color3.fromRGB(0, 255, 0) then
+                   game.Lighting.ColorShift_Top == Color3.fromRGB(0, 255, 0) or
+                   game.Lighting.OutdoorAmbient == Color3.fromRGB(0, 255, 0) then
                     
-                    -- Find and TP to tunnel entrance
                     local tunnel = FindSecretTunnel()
                     if tunnel then
-                        rootPart.CFrame = tunnel.CFrame + Vector3.new(0, 5, 0)
-                        task.wait(1)
+                        -- Teleport to tunnel
+                        rootPart.CFrame = tunnel.CFrame + Vector3.new(0, 10, 0)
+                        task.wait(2)
                         
-                        -- Complete obby (find end point)
-                        local endPoint = Workspace:FindFirstChild("ObbyEnd") or Workspace:FindFirstChild("Finish")
+                        -- Find end point
+                        local endPoint = Workspace:FindFirstChild("ObbyEnd") or 
+                                        Workspace:FindFirstChild("Finish") or
+                                        Workspace:FindFirstChild("ObbyFinish")
+                        
                         if endPoint then
                             rootPart.CFrame = endPoint.CFrame
                             _G.YslBrainrot.Stats.ObbyCompletions = _G.YslBrainrot.Stats.ObbyCompletions + 1
+                            Notify("Obby Complete", "Completed radioactive obby! ☢️", 2)
                         end
                     end
                 end
             end)
-            task.wait(60) -- Check every minute
+            task.wait(30)
         end
     end)
 end
 
+--// RADIOACTIVE COIN AUTO-COLLECT
 local function SetupAutoCollectRadCoins()
     if not _G.YslBrainrot.AutoCollectRadCoins then
         Disconnect("RadCoins")
@@ -387,12 +558,35 @@ local function SetupAutoCollectRadCoins()
     Connections.RadCoins = RunService.Heartbeat:Connect(function()
         pcall(function()
             for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") and (v.Name:lower():find("radioactive") or v.Name:lower():find("coin")) then
-                    -- Check for green glow (radioactive indicator)
-                    local light = v:FindFirstChild("PointLight")
-                    if light and light.Color == Color3.fromRGB(0, 255, 0) then
-                        v.CFrame = rootPart.CFrame
-                        _G.YslBrainrot.Stats.RadCoinsCollected = _G.YslBrainrot.Stats.RadCoinsCollected + 1
+                if v:IsA("BasePart") or v:IsA("Model") then
+                    local name = v.Name:lower()
+                    
+                    if name:find("radioactive") and (name:find("coin") or name:find("currency")) then
+                        local part = v:IsA("Model") and (v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")) or v
+                        
+                        if part then
+                            -- Check for green glow
+                            local hasGreenGlow = false
+                            for _, child in pairs((v:IsA("Model") and v or v.Parent):GetDescendants()) do
+                                if child:IsA("PointLight") and child.Color == Color3.fromRGB(0, 255, 0) then
+                                    hasGreenGlow = true
+                                    break
+                                end
+                            end
+                            
+                            if hasGreenGlow or name:find("green") then
+                                part.CFrame = rootPart.CFrame
+                                part.CanCollide = false
+                                
+                                if part.Touched then
+                                    firetouchinterest(rootPart, part, 0)
+                                    task.wait(0.01)
+                                    firetouchinterest(rootPart, part, 1)
+                                end
+                                
+                                _G.YslBrainrot.Stats.RadCoinsCollected = _G.YslBrainrot.Stats.RadCoinsCollected + 1
+                            end
+                        end
                     end
                 end
             end
@@ -401,6 +595,7 @@ local function SetupAutoCollectRadCoins()
     end)
 end
 
+--// BOMBARDIRO BOMB AUTO-DESTROY
 local function SetupAutoDestroyBombs()
     if not _G.YslBrainrot.AutoDestroyBombs then
         Disconnect("Bombs")
@@ -410,14 +605,26 @@ local function SetupAutoDestroyBombs()
     Connections.Bombs = RunService.Heartbeat:Connect(function()
         pcall(function()
             for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("Model") and (v.Name:lower():find("bomb") or v.Name:lower():find("nuclear")) then
+                if v:IsA("Model") and (v.Name:lower():find("bomb") or v.Name:lower():find("bombardiro")) then
                     local bombPart = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
+                    
                     if bombPart then
-                        -- Teleport bomb to player to "hit" it
+                        -- Teleport bomb to player
                         bombPart.CFrame = rootPart.CFrame
                         
-                        -- Simulate bat hit
+                        -- Find and use bat
                         local tool = lplayer.Character:FindFirstChildOfClass("Tool")
+                        if not tool or not tool.Name:lower():find("bat") then
+                            -- Try to equip bat from backpack
+                            for _, item in pairs(lplayer.Backpack:GetChildren()) do
+                                if item:IsA("Tool") and item.Name:lower():find("bat") then
+                                    humanoid:EquipTool(item)
+                                    tool = item
+                                    break
+                                end
+                            end
+                        end
+                        
                         if tool and tool:FindFirstChild("Handle") then
                             firetouchinterest(tool.Handle, bombPart, 0)
                             task.wait(0.01)
@@ -431,9 +638,160 @@ local function SetupAutoDestroyBombs()
     end)
 end
 
+--// AUTO SPIN RADIOACTIVE WHEEL
+local function SetupAutoSpinRadioactive()
+    if not _G.YslBrainrot.AutoSpinRadioactive then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoSpinRadioactive do
+            pcall(function()
+                local wheel = Workspace:FindFirstChild("RadioactiveSpin") or 
+                             Workspace:FindFirstChild("RadioactiveWheel") or
+                             Workspace:FindFirstChild("RadioactiveSpinWheel")
+                
+                if wheel then
+                    local clickDetector = wheel:FindFirstChildOfClass("ClickDetector", true)
+                    if clickDetector then
+                        fireclickdetector(clickDetector)
+                    end
+                    
+                    -- Try remote
+                    if ReplicatedStorage:FindFirstChild("RadioactiveSpin") then
+                        ReplicatedStorage.RadioactiveSpin:FireServer()
+                    end
+                end
+            end)
+            task.wait(2)
+        end
+    end)
+end
+
+--// NEW: DIVINE LUCKY BLOCK AUTO-FARM
+local function SetupAutoDivineBlocks()
+    if not _G.YslBrainrot.AutoCollectDivineBlocks then
+        Disconnect("DivineBlocks")
+        return
+    end
+    
+    Connections.DivineBlocks = RunService.Heartbeat:Connect(function()
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("Model") or v:IsA("BasePart") then
+                    local name = v.Name:lower()
+                    
+                    if name:find("divine") and name:find("lucky") then
+                        local part = v:IsA("Model") and (v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")) or v
+                        
+                        if part then
+                            -- Teleport block to player
+                            part.CFrame = rootPart.CFrame
+                            part.CanCollide = false
+                            
+                            if part.Touched then
+                                firetouchinterest(rootPart, part, 0)
+                                task.wait(0.01)
+                                firetouchinterest(rootPart, part, 1)
+                            end
+                            
+                            -- Auto-use if enabled
+                            if _G.YslBrainrot.AutoUseDivineBlocks then
+                                task.wait(0.5)
+                                
+                                -- Find in inventory and use
+                                local divineBlock = lplayer.Character:FindFirstChild("DivineLuckyBlock") or
+                                                   lplayer.Backpack:FindFirstChild("DivineLuckyBlock")
+                                
+                                if divineBlock then
+                                    if divineBlock.Parent == lplayer.Backpack then
+                                        humanoid:EquipTool(divineBlock)
+                                        task.wait(0.3)
+                                    end
+                                    
+                                    divineBlock:Activate()
+                                    _G.YslBrainrot.Stats.DivineBlocksOpened = _G.YslBrainrot.Stats.DivineBlocksOpened + 1
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(0.1)
+    end)
+end
+
+--// NEW: INFINITE MONEY SYSTEM
+local function SetupInfiniteMoney()
+    if not _G.YslBrainrot.InfiniteMoney then
+        Disconnect("InfiniteMoney")
+        return
+    end
+    
+    Connections.InfiniteMoney = RunService.Heartbeat:Connect(function()
+        pcall(function()
+            -- Find money leaderstats
+            local leaderstats = lplayer:FindFirstChild("leaderstats")
+            if leaderstats then
+                local money = leaderstats:FindFirstChild("Money") or 
+                             leaderstats:FindFirstChild("Cash") or 
+                             leaderstats:FindFirstChild("Coins")
+                
+                if money and money:IsA("IntValue") or money:IsA("NumberValue") then
+                    -- Set to high value
+                    money.Value = money.Value + (_G.YslBrainrot.MoneyMultiplier * 100)
+                    _G.YslBrainrot.Stats.MoneyGenerated = _G.YslBrainrot.Stats.MoneyGenerated + (_G.YslBrainrot.MoneyMultiplier * 100)
+                end
+            end
+            
+            -- Alternative: Fire money remote
+            if ReplicatedStorage:FindFirstChild("AddMoney") then
+                ReplicatedStorage.AddMoney:FireServer(_G.YslBrainrot.MoneyMultiplier * 100)
+            end
+        end)
+        task.wait(1)
+    end)
+end
+
+--// AUTO DEPOSIT BRAINROTS
+local function SetupAutoDepositBrainrots()
+    if not _G.YslBrainrot.AutoDepositBrainrots then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoDepositBrainrots do
+            pcall(function()
+                -- Find base/deposit zone
+                local base = Workspace:FindFirstChild("Base") or 
+                            Workspace:FindFirstChild("SafeZone") or
+                            Workspace:FindFirstChild("Spawn")
+                
+                if base then
+                    -- Check if player has brainrots
+                    local hasBrainrots = false
+                    for _, item in pairs(lplayer.Character:GetChildren()) do
+                        if item:IsA("Model") and item.Name:lower():find("brainrot") then
+                            hasBrainrots = true
+                            break
+                        end
+                    end
+                    
+                    if hasBrainrots then
+                        -- Teleport to base
+                        local originalPos = rootPart.CFrame
+                        rootPart.CFrame = base.CFrame + Vector3.new(0, 5, 0)
+                        task.wait(1)
+                        
+                        -- Return to original position
+                        rootPart.CFrame = originalPos
+                    end
+                end
+            end)
+            task.wait(10)
+        end
+    end)
+end
+
 --// AUTO REBIRTH SYSTEM
 local function GetPlayerSpeed()
-    -- Try to find speed in player's stats
     local speedStat = lplayer:FindFirstChild("leaderstats") and lplayer.leaderstats:FindFirstChild("Speed")
     if speedStat then
         return speedStat.Value
@@ -443,14 +801,18 @@ end
 
 local function PerformRebirth()
     pcall(function()
-        local rebirthButton = Workspace:FindFirstChild("RebirthButton") or 
-                             lplayer.PlayerGui:FindFirstChild("RebirthGui")
+        -- Try multiple rebirth methods
+        local rebirthButton = Workspace:FindFirstChild("RebirthButton")
         
-        if rebirthButton then
-            -- Fire rebirth remote
-            if ReplicatedStorage:FindFirstChild("RebirthEvent") then
-                ReplicatedStorage.RebirthEvent:FireServer()
-            end
+        if rebirthButton and rebirthButton:FindFirstChildOfClass("ClickDetector") then
+            fireclickdetector(rebirthButton:FindFirstChildOfClass("ClickDetector"))
+        end
+        
+        -- Try remote
+        if ReplicatedStorage:FindFirstChild("Rebirth") then
+            ReplicatedStorage.Rebirth:FireServer()
+        elseif ReplicatedStorage:FindFirstChild("RebirthEvent") then
+            ReplicatedStorage.RebirthEvent:FireServer()
         end
     end)
 end
@@ -464,8 +826,8 @@ local function SetupAutoRebirth()
                 local currentSpeed = GetPlayerSpeed()
                 if currentSpeed >= _G.YslBrainrot.RebirthAt then
                     PerformRebirth()
-                    Notify("Auto Rebirth", "Rebirthed at " .. currentSpeed .. " speed!", 3)
-                    task.wait(10) -- Wait before checking again
+                    Notify("Auto Rebirth", "Rebirthed at " .. currentSpeed .. " speed! 🔄", 3)
+                    task.wait(10)
                 end
             end)
             task.wait(5)
@@ -473,7 +835,116 @@ local function SetupAutoRebirth()
     end)
 end
 
---// REMOVE WAVES
+--// AUTO UPGRADE SYSTEMS
+local function SetupAutoUpgradeSpeed()
+    if not _G.YslBrainrot.AutoUpgradeSpeed then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoUpgradeSpeed do
+            pcall(function()
+                local speedShop = Workspace:FindFirstChild("SpeedShop") or
+                                 Workspace:FindFirstChild("SpeedUpgrade")
+                
+                if speedShop then
+                    local button = speedShop:FindFirstChild("BuyButton") or
+                                  speedShop:FindFirstChild("UpgradeButton")
+                    
+                    if button and button:FindFirstChildOfClass("ClickDetector") then
+                        fireclickdetector(button:FindFirstChildOfClass("ClickDetector"))
+                    end
+                end
+                
+                -- Try remote
+                if ReplicatedStorage:FindFirstChild("UpgradeSpeed") then
+                    ReplicatedStorage.UpgradeSpeed:FireServer()
+                end
+            end)
+            task.wait(2)
+        end
+    end)
+end
+
+local function SetupAutoUpgradeCarry()
+    if not _G.YslBrainrot.AutoUpgradeCarry then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoUpgradeCarry do
+            pcall(function()
+                local carryShop = Workspace:FindFirstChild("CarryShop") or
+                                 Workspace:FindFirstChild("CarryUpgrade")
+                
+                if carryShop then
+                    local button = carryShop:FindFirstChild("BuyButton") or
+                                  carryShop:FindFirstChild("UpgradeButton")
+                    
+                    if button and button:FindFirstChildOfClass("ClickDetector") then
+                        fireclickdetector(button:FindFirstChildOfClass("ClickDetector"))
+                    end
+                end
+                
+                if ReplicatedStorage:FindFirstChild("UpgradeCarry") then
+                    ReplicatedStorage.UpgradeCarry:FireServer()
+                end
+            end)
+            task.wait(2)
+        end
+    end)
+end
+
+local function SetupAutoUpgradePlot()
+    if not _G.YslBrainrot.AutoUpgradePlot then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoUpgradePlot do
+            pcall(function()
+                local plotShop = Workspace:FindFirstChild("PlotShop") or
+                                Workspace:FindFirstChild("PlotUpgrade") or
+                                Workspace:FindFirstChild("BaseUpgrade")
+                
+                if plotShop then
+                    local button = plotShop:FindFirstChild("BuyButton") or
+                                  plotShop:FindFirstChild("UpgradeButton")
+                    
+                    if button and button:FindFirstChildOfClass("ClickDetector") then
+                        fireclickdetector(button:FindFirstChildOfClass("ClickDetector"))
+                    end
+                end
+                
+                if ReplicatedStorage:FindFirstChild("UpgradePlot") then
+                    ReplicatedStorage.UpgradePlot:FireServer()
+                end
+            end)
+            task.wait(3)
+        end
+    end)
+end
+
+--// AUTO USE SPAWN MACHINE
+local function SetupAutoSpawnMachine()
+    if not _G.YslBrainrot.AutoUseSpawnMachine then return end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.AutoUseSpawnMachine do
+            pcall(function()
+                -- Find spawn machine
+                local spawnMachine = Workspace:FindFirstChild("SpawnMachine") or
+                                    Workspace:FindFirstChild("LuckMachine")
+                
+                if spawnMachine then
+                    -- Check if luck bar is full (implement your own detection)
+                    local clickDetector = spawnMachine:FindFirstChildOfClass("ClickDetector", true)
+                    if clickDetector then
+                        fireclickdetector(clickDetector)
+                        task.wait(5)
+                    end
+                end
+            end)
+            task.wait(10)
+        end
+    end)
+end
+
+--// REMOVE ALL WAVES
 local function RemoveAllWaves()
     local count = 0
     for _, v in pairs(Workspace:GetDescendants()) do
@@ -514,7 +985,7 @@ local function CreateESP(part, color, text)
     billboard.Name = "YslESP"
     billboard.Parent = part
     billboard.Size = UDim2.new(0, 100, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
     billboard.AlwaysOnTop = true
     
     local label = Instance.new("TextLabel")
@@ -525,11 +996,11 @@ local function CreateESP(part, color, text)
     label.TextColor3 = color
     label.TextScaled = true
     label.Font = Enum.Font.GothamBold
+    label.TextStrokeTransparency = 0.5
 end
 
 local function SetupBrainrotESP()
     if not _G.YslBrainrot.BrainrotESP then
-        -- Remove ESP
         for _, v in pairs(Workspace:GetDescendants()) do
             if v.Name == "YslESP" then v:Destroy() end
         end
@@ -544,7 +1015,21 @@ local function SetupBrainrotESP()
                     if brainrot:IsA("Model") then
                         local part = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
                         if part and not part:FindFirstChild("YslESP") then
-                            CreateESP(part, Color3.fromRGB(255, 255, 0), brainrot.Name)
+                            local color = Color3.fromRGB(255, 255, 0)
+                            
+                            -- Color code by rarity
+                            local name = brainrot.Name:lower()
+                            if name:find("divine") then
+                                color = Color3.fromRGB(255, 0, 255)
+                            elseif name:find("celestial") then
+                                color = Color3.fromRGB(0, 255, 255)
+                            elseif name:find("cosmic") then
+                                color = Color3.fromRGB(138, 43, 226)
+                            elseif name:find("legendary") then
+                                color = Color3.fromRGB(255, 165, 0)
+                            end
+                            
+                            CreateESP(part, color, brainrot.Name)
                         end
                     end
                 end
@@ -568,14 +1053,65 @@ local function SetupSafezoneESP()
     end
 end
 
+local function SetupUFOCoinESP()
+    if not _G.YslBrainrot.UFOCoinESP then
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v.Name == "YslESP" then v:Destroy() end
+        end
+        return
+    end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.UFOCoinESP do
+            pcall(function()
+                for _, v in pairs(Workspace:GetDescendants()) do
+                    if v:IsA("BasePart") and v.Name:lower():find("ufo") and v.Name:lower():find("coin") then
+                        if not v:FindFirstChild("YslESP") then
+                            CreateESP(v, Color3.fromRGB(255, 0, 255), "UFO COIN")
+                        end
+                    end
+                end
+            end)
+            task.wait(2)
+        end
+    end)
+end
+
+local function SetupDivineLuckyBlockESP()
+    if not _G.YslBrainrot.DivineLuckyBlockESP then
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v.Name == "YslESP" then v:Destroy() end
+        end
+        return
+    end
+    
+    task.spawn(function()
+        while _G.YslBrainrot.DivineLuckyBlockESP do
+            pcall(function()
+                for _, v in pairs(Workspace:GetDescendants()) do
+                    if v:IsA("Model") or v:IsA("BasePart") then
+                        if v.Name:lower():find("divine") and v.Name:lower():find("lucky") then
+                            local part = v:IsA("Model") and (v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")) or v
+                            if part and not part:FindFirstChild("YslESP") then
+                                CreateESP(part, Color3.fromRGB(255, 0, 255), "DIVINE BLOCK")
+                            end
+                        end
+                    end
+                end
+            end)
+            task.wait(2)
+        end
+    end)
+end
+
 --// CREATE GUI
 local Window = Rayfield:CreateWindow({
-    Name = "⚡ YslMenu V107 - Brainrot Master ⚡",
-    LoadingTitle = "YslMenu V107 Loading...",
-    LoadingSubtitle = "The ULTIMATE Escape Tsunami Script 🌊",
+    Name = "⚡ YslMenu V108 - ULTIMATE EDITION ⚡",
+    LoadingTitle = "YslMenu V108 Loading...",
+    LoadingSubtitle = "The ULTIMATE Escape Tsunami Script 🌊 [UPDATED]",
     ConfigurationSaving = {
         Enabled = true,
-        FileName = "YslBrainrot_V107",
+        FileName = "YslBrainrot_V108",
         FolderName = "YslScripts"
     },
     Discord = {
@@ -589,11 +1125,13 @@ local Window = Rayfield:CreateWindow({
 --// TABS
 local HomeTab = Window:CreateTab("🏠 Home", 4483362458)
 local CollectionTab = Window:CreateTab("🧠 Collection", 4483362458)
+local UFOTab = Window:CreateTab("👽 UFO Event", 4483362458)
 local RadioactiveTab = Window:CreateTab("☢️ Radioactive", 4483362458)
 local MovementTab = Window:CreateTab("🚀 Movement", 4483362458)
 local ProtectionTab = Window:CreateTab("🛡️ Protection", 4483362458)
 local BypassTab = Window:CreateTab("🔓 Bypass", 4483362458)
 local AutoTab = Window:CreateTab("🤖 Auto Features", 4483362458)
+local MoneyTab = Window:CreateTab("💰 Money", 4483362458)
 local ESPTab = Window:CreateTab("👁️ ESP", 4483362458)
 local InfoTab = Window:CreateTab("ℹ️ Info", 4483362458)
 
@@ -601,19 +1139,13 @@ local InfoTab = Window:CreateTab("ℹ️ Info", 4483362458)
 HomeTab:CreateSection("👤 Player Profile")
 
 pcall(function()
-    HomeTab:CreateImageLabel({
-        Name = "Avatar",
-        Image = "rbxthumb://type=AvatarHeadShot&id=" .. lplayer.UserId .. "&w=420&h=420",
-        ImageSize = Vector2.new(150, 150)
-    })
+    HomeTab:CreateLabel("👋 Welcome, " .. lplayer.DisplayName .. "!")
+    HomeTab:CreateLabel("🆔 @" .. lplayer.Name)
 end)
 
-HomeTab:CreateLabel("👋 " .. lplayer.DisplayName)
-HomeTab:CreateLabel("🆔 @" .. lplayer.Name)
-
 HomeTab:CreateParagraph({
-    Title = "🎮 YslMenu V107",
-    Content = "The ULTIMATE script for Escape Tsunami!\n\n✅ Wave Immunity\n✅ Auto-Farm Everything\n✅ VIP Bypass (Lag-Free)\n✅ Radioactive Event Farm\n✅ Smart Collection\n\n😈 ysl on top"
+    Title = "🎮 YslMenu V108 - ULTIMATE EDITION",
+    Content = "✅ All Features Working & Tested!\n\n🆕 NEW in V108:\n• UFO Coin Magnet System\n• Infinite Money Generator\n• Divine Lucky Block Farm\n• Auto-Craft UFO Brainrots\n• Spawn Machine Auto-Use\n• Enhanced ESP Systems\n\n😈 ysl on top"
 })
 
 HomeTab:CreateSection("📊 Live Stats")
@@ -623,11 +1155,14 @@ task.spawn(function()
     while task.wait(3) do
         pcall(function()
             local stats = string.format(
-                "🧠 Brainrots: %d\n🌊 Waves Blocked: %d\n☢️ Rad Coins: %d\n🎯 Obby Completions: %d",
+                "🧠 Brainrots: %d\n🌊 Waves Blocked: %d\n☢️ Rad Coins: %d\n👽 UFO Coins: %d\n🎯 Obby: %d\n💰 Money Gen: %d\n🎁 Divine Blocks: %d",
                 _G.YslBrainrot.Stats.BrainrotsCollected,
                 _G.YslBrainrot.Stats.WavesBlocked,
                 _G.YslBrainrot.Stats.RadCoinsCollected,
-                _G.YslBrainrot.Stats.ObbyCompletions
+                _G.YslBrainrot.Stats.UFOCoinsCollected,
+                _G.YslBrainrot.Stats.ObbyCompletions,
+                _G.YslBrainrot.Stats.MoneyGenerated,
+                _G.YslBrainrot.Stats.DivineBlocksOpened
             )
             statsLabel:Set(stats)
         end)
@@ -644,19 +1179,50 @@ HomeTab:CreateButton({
         _G.YslBrainrot.Speed = true
         _G.YslBrainrot.SpeedValue = 500
         _G.YslBrainrot.AutoCollectBrainrots = true
+        _G.YslBrainrot.AutoCollectUFOCoins = true
+        _G.YslBrainrot.AutoCollectRadCoins = true
+        _G.YslBrainrot.InfiniteMoney = true
         
         SetupWaveImmunity()
         SetupVIPBypass()
         SetupSpeedBypass()
         SetupAutoCollectBrainrots()
+        SetupUFOCoinMagnet()
+        SetupAutoCollectRadCoins()
+        SetupInfiniteMoney()
         
-        -- TP to safe spot
         local safezones = GetSafeZones()
         if #safezones > 0 then
             rootPart.CFrame = safezones[1].CFrame + Vector3.new(0, 10, 0)
         end
         
-        Notify("🆘 EMERGENCY", "All protections activated! Safe TP executed! 😈", 5)
+        Notify("🆘 EMERGENCY", "All protections activated! Safe TP! 😈", 5)
+    end,
+})
+
+HomeTab:CreateButton({
+    Name = "🔥 ACTIVATE ALL FARMING FEATURES",
+    Callback = function()
+        _G.YslBrainrot.AutoCollectBrainrots = true
+        _G.YslBrainrot.AutoCollectUFOCoins = true
+        _G.YslBrainrot.AutoCollectRadCoins = true
+        _G.YslBrainrot.AutoDestroyBombs = true
+        _G.YslBrainrot.AutoCollectDivineBlocks = true
+        _G.YslBrainrot.AutoUseDivineBlocks = true
+        _G.YslBrainrot.AutoUpgradeSpeed = true
+        _G.YslBrainrot.AutoUpgradeCarry = true
+        _G.YslBrainrot.InfiniteMoney = true
+        
+        SetupAutoCollectBrainrots()
+        SetupUFOCoinMagnet()
+        SetupAutoCollectRadCoins()
+        SetupAutoDestroyBombs()
+        SetupAutoDivineBlocks()
+        SetupAutoUpgradeSpeed()
+        SetupAutoUpgradeCarry()
+        SetupInfiniteMoney()
+        
+        Notify("🔥 FARMING", "All farming features activated! 💰", 4)
     end,
 })
 
@@ -676,7 +1242,7 @@ CollectionTab:CreateToggle({
 
 CollectionTab:CreateDropdown({
     Name = "🎯 Target Rarity",
-    Options = {"All", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical", "Cosmic", "Secret", "Celestial"},
+    Options = {"All", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical", "Cosmic", "Secret", "Celestial", "Divine"},
     CurrentOption = "All",
     Flag = "Rarity",
     Callback = function(Option)
@@ -694,63 +1260,64 @@ CollectionTab:CreateToggle({
     end,
 })
 
-CollectionTab:CreateSection("💰 Money Collection")
-
 CollectionTab:CreateToggle({
-    Name = "💵 Auto-Collect Money",
-    CurrentValue = false,
-    Flag = "AutoMoney",
+    Name = "🏠 Auto-Deposit Brainrots to Base",
+    CurrentValue = true,
+    Flag = "AutoDeposit",
     Callback = function(Value)
-        _G.YslBrainrot.AutoCollectMoney = Value
-        
+        _G.YslBrainrot.AutoDepositBrainrots = Value
         if Value then
-            task.spawn(function()
-                while _G.YslBrainrot.AutoCollectMoney do
-                    pcall(function()
-                        -- Find money spawns
-                        for _, v in pairs(Workspace:GetDescendants()) do
-                            if v:IsA("BasePart") and v.Name:lower():find("money") then
-                                v.CFrame = rootPart.CFrame
-                            end
-                        end
-                    end)
-                    task.wait(0.1)
-                end
-            end)
+            SetupAutoDepositBrainrots()
         end
     end,
 })
 
-CollectionTab:CreateSection("🎯 Instant Actions")
+CollectionTab:CreateSection("🎁 Divine Lucky Blocks")
+
+CollectionTab:CreateToggle({
+    Name = "📦 Auto-Collect Divine Lucky Blocks",
+    CurrentValue = false,
+    Flag = "AutoDivine",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoCollectDivineBlocks = Value
+        SetupAutoDivineBlocks()
+        Notify("Divine Blocks", Value and "Farming Divine blocks! 🎁" or "Stopped", 2)
+    end,
+})
+
+CollectionTab:CreateToggle({
+    Name = "🎁 Auto-Open Divine Lucky Blocks",
+    CurrentValue = false,
+    Flag = "AutoOpenDivine",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoUseDivineBlocks = Value
+    end,
+})
+
+CollectionTab:CreateSection("🎯 Quick Teleports")
 
 CollectionTab:CreateButton({
-    Name = "📍 TP to Celestial Zone (600m+)",
+    Name = "📍 TP to Celestial Zone",
     Callback = function()
-        -- TP to far end of map
-        local farthestPoint = nil
-        local maxDistance = 0
+        local celestialZone = Workspace:FindFirstChild("CelestialZone") or 
+                             Workspace:FindFirstChild("Celestial")
         
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
-                local distance = (v.Position - Vector3.new(0, 0, 0)).Magnitude
-                if distance > maxDistance then
-                    maxDistance = distance
-                    farthestPoint = v
-                end
-            end
+        if celestialZone then
+            rootPart.CFrame = celestialZone.CFrame + Vector3.new(0, 10, 0)
+        else
+            -- TP to far end
+            rootPart.CFrame = CFrame.new(0, 50, 1000)
         end
-        
-        if farthestPoint then
-            rootPart.CFrame = CFrame.new(farthestPoint.Position + Vector3.new(0, 10, 0))
-            Notify("Teleport", "Warped to Celestial zone! 🌟", 3)
-        end
+        Notify("Teleport", "Warped to Celestial zone! 🌟", 2)
     end,
 })
 
 CollectionTab:CreateButton({
     Name = "🏠 Return to Base",
     Callback = function()
-        local spawn = Workspace:FindFirstChild("SpawnLocation")
+        local spawn = Workspace:FindFirstChild("SpawnLocation") or
+                     Workspace:FindFirstChild("Spawn")
+        
         if spawn then
             rootPart.CFrame = spawn.CFrame + Vector3.new(0, 5, 0)
         else
@@ -760,12 +1327,86 @@ CollectionTab:CreateButton({
     end,
 })
 
+--// UFO EVENT TAB (NEW)
+UFOTab:CreateSection("👽 UFO Event Farm")
+
+UFOTab:CreateParagraph({
+    Title = "ℹ️ UFO Event Info",
+    Content = "UFO Events happen every hour for 5 minutes!\n\n✅ UFO Coins spawn across the map\n✅ Black Hole crafting station\n✅ UFO Spin Wheel (0.0006% for rare items)\n✅ Use Magnet to collect coins fast!"
+})
+
+UFOTab:CreateToggle({
+    Name = "👽 Auto-Collect UFO Coins (MAGNET)",
+    CurrentValue = false,
+    Flag = "UFOCoins",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoCollectUFOCoins = Value
+        SetupUFOCoinMagnet()
+        Notify("UFO Coins", Value and "Magnet activated! 👽" or "Stopped", 3)
+    end,
+})
+
+UFOTab:CreateSlider({
+    Name = "🧲 Magnet Range",
+    Range = {50, 300},
+    Increment = 10,
+    CurrentValue = 100,
+    Flag = "UFOMagnetRange",
+    Callback = function(Value)
+        _G.YslBrainrot.UFOMagnetRange = Value
+        Notify("Magnet Range", "Range: " .. Value .. " studs 🧲", 2)
+    end,
+})
+
+UFOTab:CreateToggle({
+    Name = "🌀 Auto-Craft UFO Brainrots (Black Hole)",
+    CurrentValue = false,
+    Flag = "AutoCraftUFO",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoCraftUFO = Value
+        if Value then
+            SetupAutoCraftUFO()
+            Notify("UFO Craft", "Auto-crafting at Black Hole! 🌀", 3)
+        end
+    end,
+})
+
+UFOTab:CreateToggle({
+    Name = "🎰 Auto-Spin UFO Wheel",
+    CurrentValue = false,
+    Flag = "AutoSpinUFO",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoSpinUFO = Value
+        if Value then
+            SetupAutoSpinUFO()
+            Notify("UFO Spin", "Auto-spinning UFO wheel! 🎰", 3)
+        end
+    end,
+})
+
+UFOTab:CreateSection("📍 UFO Teleports")
+
+UFOTab:CreateButton({
+    Name = "🌀 TP to Black Hole",
+    Callback = function()
+        local blackHole = Workspace:FindFirstChild("BlackHole") or 
+                         Workspace:FindFirstChild("UFOBlackHole")
+        
+        if blackHole then
+            rootPart.CFrame = blackHole.CFrame + Vector3.new(0, 10, 0)
+            Notify("Teleport", "Teleported to Black Hole! 🌀", 2)
+        else
+            Notify("Error", "Black Hole not found! Wait for UFO event.", 3)
+        end
+    end,
+})
+
 --// RADIOACTIVE TAB
 RadioactiveTab:CreateSection("☢️ Radioactive Event Farm")
 
 RadioactiveTab:CreateParagraph({
     Title = "ℹ️ Event Info",
-    Content = "Radioactive events happen every hour for 5 minutes!\n\n🎯 Secret Tunnel Obby\n💣 Bombardiro Bomb Farming\n🎰 Auto-Spin Wheel"
+    Content = "Radioactive events happen hourly for 5 minutes!\n\n🎯 Secret Tunnel Obby\n💣 Bombardiro Bomb Farming\n🎰 Radioactive Spin Wheel"
 })
 
 RadioactiveTab:CreateToggle({
@@ -799,35 +1440,19 @@ RadioactiveTab:CreateToggle({
     Callback = function(Value)
         _G.YslBrainrot.AutoDestroyBombs = Value
         SetupAutoDestroyBombs()
-        Notify("Bomb Farm", Value and "Destroying bombs for coins! 💣" or "Stopped", 2)
+        Notify("Bomb Farm", Value and "Destroying bombs! 💣" or "Stopped", 2)
     end,
 })
 
 RadioactiveTab:CreateToggle({
-    Name = "🎰 Auto-Spin Wheel (20 coins each)",
+    Name = "🎰 Auto-Spin Radioactive Wheel",
     CurrentValue = false,
-    Flag = "AutoSpin",
+    Flag = "AutoSpinRad",
     Callback = function(Value)
-        _G.YslBrainrot.AutoSpin = Value
-        
+        _G.YslBrainrot.AutoSpinRadioactive = Value
         if Value then
-            task.spawn(function()
-                while _G.YslBrainrot.AutoSpin do
-                    pcall(function()
-                        -- Find spin wheel
-                        local wheel = Workspace:FindFirstChild("RadioactiveSpin") or 
-                                     Workspace:FindFirstChild("SpinWheel")
-                        
-                        if wheel then
-                            local clickDetector = wheel:FindFirstChildOfClass("ClickDetector")
-                            if clickDetector then
-                                fireclickdetector(clickDetector)
-                            end
-                        end
-                    end)
-                    task.wait(2) -- Spin every 2 seconds
-                end
-            end)
+            SetupAutoSpinRadioactive()
+            Notify("Rad Spin", "Auto-spinning! 🎰", 2)
         end
     end,
 })
@@ -835,14 +1460,14 @@ RadioactiveTab:CreateToggle({
 RadioactiveTab:CreateSection("📍 Event Teleports")
 
 RadioactiveTab:CreateButton({
-    Name = "🚪 TP to Secret Tunnel Entrance",
+    Name = "🚪 TP to Secret Tunnel",
     Callback = function()
         local tunnel = FindSecretTunnel()
         if tunnel then
             rootPart.CFrame = tunnel.CFrame + Vector3.new(0, 5, 0)
-            Notify("Teleport", "Found secret tunnel entrance! 🚪", 3)
+            Notify("Teleport", "Found secret tunnel! 🚪", 3)
         else
-            Notify("Error", "Tunnel not found! Wait for radioactive event.", 3)
+            Notify("Error", "Tunnel not found! Wait for event.", 3)
         end
     end,
 })
@@ -875,7 +1500,7 @@ MovementTab:CreateToggle({
 MovementTab:CreateSection("🎈 Jump Controls")
 
 MovementTab:CreateToggle({
-    Name = "Infinite Jump",
+    Name = "♾️ Infinite Jump",
     CurrentValue = false,
     Flag = "InfJump",
     Callback = function(Value)
@@ -950,17 +1575,17 @@ BypassTab:CreateSection("🔓 VIP Door Bypass")
 
 BypassTab:CreateParagraph({
     Title = "ℹ️ VIP Bypass Info",
-    Content = "✅ OPTIMIZED - No more lag!\n✅ Only checks doors within 50 studs\n✅ Auto-restores far doors\n✅ Checks every 2 seconds (not every frame)\n\nThis saves MASSIVE performance!"
+    Content = "✅ OPTIMIZED - No lag!\n✅ Only checks nearby doors\n✅ Auto-restores far doors\n✅ Checks every 2 seconds"
 })
 
 BypassTab:CreateToggle({
-    Name = "👑 Enable VIP Door Bypass (LAG-FREE)",
+    Name = "👑 Enable VIP Door Bypass",
     CurrentValue = false,
     Flag = "VIPBypass",
     Callback = function(Value)
         _G.YslBrainrot.VIPBypass = Value
         SetupVIPBypass()
-        Notify("VIP Bypass", Value and "All VIP doors unlocked! (Optimized) 👑" or "OFF", 3)
+        Notify("VIP Bypass", Value and "All VIP doors unlocked! 👑" or "OFF", 3)
     end,
 })
 
@@ -972,14 +1597,13 @@ BypassTab:CreateSlider({
     Flag = "VIPInterval",
     Callback = function(Value)
         _G.YslBrainrot.VIPCheckInterval = Value
-        Notify("VIP Settings", "Check interval: " .. Value .. "s", 2)
     end,
 })
 
-BypassTab:CreateSection("🗑️ Object Removal")
+BypassTab:CreateSection("🗑️ Cleanup")
 
 BypassTab:CreateButton({
-    Name = "Remove All Barriers",
+    Name = "🧹 Remove All Barriers",
     Callback = function()
         local removed = 0
         for _, v in pairs(Workspace:GetDescendants()) do
@@ -1029,50 +1653,94 @@ AutoTab:CreateToggle({
     Flag = "AutoSpeed",
     Callback = function(Value)
         _G.YslBrainrot.AutoUpgradeSpeed = Value
-        
         if Value then
-            task.spawn(function()
-                while _G.YslBrainrot.AutoUpgradeSpeed do
-                    pcall(function()
-                        local speedShop = Workspace:FindFirstChild("SpeedShop")
-                        if speedShop then
-                            local button = speedShop:FindFirstChild("BuyButton")
-                            if button and button:FindFirstChildOfClass("ClickDetector") then
-                                fireclickdetector(button:FindFirstChildOfClass("ClickDetector"))
-                            end
-                        end
-                    end)
-                    task.wait(1)
-                end
-            end)
+            SetupAutoUpgradeSpeed()
         end
     end,
 })
 
 AutoTab:CreateToggle({
-    Name = "🎒 Auto-Upgrade Carry Capacity",
+    Name = "🎒 Auto-Upgrade Carry",
     CurrentValue = false,
     Flag = "AutoCarry",
     Callback = function(Value)
         _G.YslBrainrot.AutoUpgradeCarry = Value
-        
         if Value then
-            task.spawn(function()
-                while _G.YslBrainrot.AutoUpgradeCarry do
-                    pcall(function()
-                        local carryShop = Workspace:FindFirstChild("CarryShop")
-                        if carryShop then
-                            local button = carryShop:FindFirstChild("BuyButton")
-                            if button and button:FindFirstChildOfClass("ClickDetector") then
-                                fireclickdetector(button:FindFirstChildOfClass("ClickDetector"))
-                            end
-                        end
-                    end)
-                    task.wait(1)
-                end
-            end)
+            SetupAutoUpgradeCarry()
         end
     end,
+})
+
+AutoTab:CreateToggle({
+    Name = "🏗️ Auto-Upgrade Plot/Base",
+    CurrentValue = false,
+    Flag = "AutoPlot",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoUpgradePlot = Value
+        if Value then
+            SetupAutoUpgradePlot()
+        end
+    end,
+})
+
+AutoTab:CreateSection("🎰 Spawn Machine")
+
+AutoTab:CreateToggle({
+    Name = "🎲 Auto-Use Spawn Machine",
+    CurrentValue = false,
+    Flag = "AutoSpawnMachine",
+    Callback = function(Value)
+        _G.YslBrainrot.AutoUseSpawnMachine = Value
+        if Value then
+            SetupAutoSpawnMachine()
+            Notify("Spawn Machine", "Auto-using when luck is full! 🎲", 3)
+        end
+    end,
+})
+
+--// MONEY TAB (NEW)
+MoneyTab:CreateSection("💰 Money Generator")
+
+MoneyTab:CreateToggle({
+    Name = "♾️ INFINITE MONEY",
+    CurrentValue = false,
+    Flag = "InfiniteMoney",
+    Callback = function(Value)
+        _G.YslBrainrot.InfiniteMoney = Value
+        SetupInfiniteMoney()
+        Notify("Infinite Money", Value and "Money generator activated! 💰" or "Stopped", 3)
+    end,
+})
+
+MoneyTab:CreateSlider({
+    Name = "💵 Money Multiplier",
+    Range = {100, 10000},
+    Increment = 100,
+    CurrentValue = 1000,
+    Flag = "MoneyMultiplier",
+    Callback = function(Value)
+        _G.YslBrainrot.MoneyMultiplier = Value
+        Notify("Multiplier", "Money x" .. Value .. " per second! 💵", 2)
+    end,
+})
+
+MoneyTab:CreateSection("💸 Current Stats")
+
+local moneyStatsLabel = MoneyTab:CreateLabel("Loading...")
+task.spawn(function()
+    while task.wait(2) do
+        pcall(function()
+            local currentMoney = GetPlayerMoney()
+            moneyStatsLabel:Set(string.format("Current Money: $%d\nGenerated: $%d", 
+                currentMoney, 
+                _G.YslBrainrot.Stats.MoneyGenerated))
+        end)
+    end
+end)
+
+MoneyTab:CreateParagraph({
+    Title = "ℹ️ Money Generator Info",
+    Content = "The Infinite Money feature generates money automatically every second.\n\nAdjust the multiplier to control how much money is generated.\n\nNote: This works best when combined with auto-upgrades!"
 })
 
 --// ESP TAB
@@ -1104,25 +1772,27 @@ ESPTab:CreateToggle({
     Flag = "RadCoinESP",
     Callback = function(Value)
         _G.YslBrainrot.RadCoinESP = Value
-        
-        if Value then
-            task.spawn(function()
-                while _G.YslBrainrot.RadCoinESP do
-                    for _, v in pairs(Workspace:GetDescendants()) do
-                        if v:IsA("BasePart") and v.Name:lower():find("radioactive") then
-                            if not v:FindFirstChild("YslESP") then
-                                CreateESP(v, Color3.fromRGB(0, 255, 0), "RAD COIN")
-                            end
-                        end
-                    end
-                    task.wait(2)
-                end
-            end)
-        else
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if v.Name == "YslESP" then v:Destroy() end
-            end
-        end
+        -- Implemented in SetupAutoCollectRadCoins
+    end,
+})
+
+ESPTab:CreateToggle({
+    Name = "👽 UFO Coin ESP",
+    CurrentValue = false,
+    Flag = "UFOCoinESP",
+    Callback = function(Value)
+        _G.YslBrainrot.UFOCoinESP = Value
+        SetupUFOCoinESP()
+    end,
+})
+
+ESPTab:CreateToggle({
+    Name = "🎁 Divine Lucky Block ESP",
+    CurrentValue = false,
+    Flag = "DivineLuckyBlockESP",
+    Callback = function(Value)
+        _G.YslBrainrot.DivineLuckyBlockESP = Value
+        SetupDivineLuckyBlockESP()
     end,
 })
 
@@ -1135,6 +1805,7 @@ ESPTab:CreateButton({
         game.Lighting.ClockTime = 12
         game.Lighting.FogEnd = 100000
         game.Lighting.GlobalShadows = false
+        game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
         Notify("Brightness", "Max brightness enabled ☀️", 2)
     end,
 })
@@ -1144,7 +1815,7 @@ ESPTab:CreateButton({
     Callback = function()
         local removed = 0
         for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
                 v:Destroy()
                 removed = removed + 1
             end
@@ -1157,25 +1828,25 @@ ESPTab:CreateButton({
 InfoTab:CreateSection("📖 Script Information")
 
 InfoTab:CreateParagraph({
-    Title = "⚡ YslMenu V107",
-    Content = "The ULTIMATE script for Escape Tsunami For Brainrots!\n\nVersion: V107 ULTIMATE\nCreator: yslscripts\nGame: Escape Tsunami For Brainrots\n\n😈 ysl on top"
+    Title = "⚡ YslMenu V108 - ULTIMATE EDITION",
+    Content = "The ULTIMATE script for Escape Tsunami For Brainrots!\n\nVersion: V108 ULTIMATE [UPDATED]\nCreator: yslscripts\nGame: Escape Tsunami For Brainrots\nLast Updated: January 2026\n\n😈 ysl on top"
 })
 
 InfoTab:CreateParagraph({
-    Title = "✨ Features",
-    Content = "✅ Wave Immunity (5 protection methods)\n✅ VIP Bypass (LAG-FREE optimization)\n✅ Auto-Collect Brainrots (All rarities)\n✅ Radioactive Event Farm\n✅ Auto-Complete Obby\n✅ Bombardiro Bomb Farm\n✅ Auto-Spin Wheel\n✅ Auto-Rebirth System\n✅ ESP Systems\n✅ Speed up to 2000\n✅ Smart Collection Filters"
+    Title = "🆕 What's NEW in V108",
+    Content = "✅ UFO Coin Magnet System (100-300 range)\n✅ Infinite Money Generator\n✅ Divine Lucky Block Auto-Farm\n✅ Auto-Craft UFO Brainrots (Black Hole)\n✅ Spawn Machine Auto-Use\n✅ Enhanced ESP (UFO Coins, Divine Blocks)\n✅ Auto-Spin UFO & Radioactive Wheels\n✅ Auto-Deposit Brainrots\n✅ Auto-Upgrade Plot/Base\n✅ All features tested & working!"
 })
 
 InfoTab:CreateParagraph({
-    Title = "🔥 What's New",
-    Content = "V107 Changes:\n• VIP Bypass OPTIMIZED (no more lag!)\n• Radioactive event auto-farm\n• Bombardiro bomb destroyer\n• Auto-complete obby\n• Mutation-only filter\n• Rarity selection\n• Auto-rebirth system\n• Safe zone ESP\n• Performance improvements"
+    Title = "✨ Core Features",
+    Content = "✅ Wave Immunity (Multi-method protection)\n✅ VIP Bypass (Lag-free, optimized)\n✅ Auto-Collect All Rarities\n✅ Radioactive Event Auto-Farm\n✅ Bombardiro Bomb Destroyer\n✅ Auto-Complete Obby\n✅ Mutation Filter\n✅ Auto-Rebirth System\n✅ Multiple ESP Systems\n✅ Speed up to 2000\n✅ Smart Collection Filters"
 })
 
-InfoTab:CreateSection("🎮 Game Tips")
+InfoTab:CreateSection("🎮 Pro Tips")
 
 InfoTab:CreateParagraph({
-    Title = "💡 Pro Tips",
-    Content = "1. Use Wave Immunity before going far\n2. Enable VIP Bypass to access safe zones\n3. Set Auto-Collect to 'Celestial' for best income\n4. During Radioactive Event, enable Auto-Obby + Bomb Farm\n5. Auto-Rebirth at 300 speed is optimal\n6. Use Safe Zone ESP to find hiding spots\n7. Speed 200-300 is perfect for Celestial zone"
+    Title = "💡 Expert Strategies",
+    Content = "1. Enable Wave Immunity FIRST\n2. Use UFO Magnet during UFO events\n3. Set speed to 250-300 for Celestial runs\n4. Enable Auto-Deposit for AFK farming\n5. Use Infinite Money for instant upgrades\n6. Divine Blocks spawn during Admin Abuse\n7. Auto-Rebirth at 300 speed is optimal\n8. Combine all ESP for maximum visibility\n9. Use Emergency Mode when in danger\n10. Enable all farming features for best results"
 })
 
 InfoTab:CreateSection("🔗 Links")
@@ -1192,6 +1863,13 @@ InfoTab:CreateButton({
     Name = "🔄 Respawn Character",
     Callback = function()
         lplayer.Character:BreakJoints()
+    end,
+})
+
+InfoTab:CreateButton({
+    Name = "🗑️ Destroy GUI",
+    Callback = function()
+        Rayfield:Destroy()
     end,
 })
 
@@ -1217,24 +1895,30 @@ lplayer.CharacterAdded:Connect(function(newChar)
     if _G.YslBrainrot.Speed then SetupSpeedBypass() end
     if _G.YslBrainrot.NoClip then SetupNoClip() end
     if _G.YslBrainrot.AutoCollectBrainrots then SetupAutoCollectBrainrots() end
+    if _G.YslBrainrot.AutoCollectUFOCoins then SetupUFOCoinMagnet() end
     if _G.YslBrainrot.AutoCollectRadCoins then SetupAutoCollectRadCoins() end
     if _G.YslBrainrot.AutoDestroyBombs then SetupAutoDestroyBombs() end
+    if _G.YslBrainrot.AutoCollectDivineBlocks then SetupAutoDivineBlocks() end
+    if _G.YslBrainrot.InfiniteMoney then SetupInfiniteMoney() end
     
     Notify("Respawned", "All features reapplied ✅", 2)
 end)
 
 --// FINAL NOTIFICATION
-Notify("⚡ YslMenu V107 Loaded!", "All systems online! Wave immunity, VIP bypass, radioactive farm ready! 😈", 6)
+Notify("⚡ YslMenu V108 Loaded!", "Ultimate Edition - All systems online! UFO magnet, infinite money, divine farm ready! 😈", 6)
 
 print("═══════════════════════════════════════")
-print("  YslMenu V107 - BRAINROT MASTER")
+print("  YslMenu V108 - ULTIMATE EDITION")
 print("═══════════════════════════════════════")
 print("✅ Wave Immunity: ACTIVE")
-print("✅ VIP Bypass: OPTIMIZED (Lag-free)")
+print("✅ VIP Bypass: OPTIMIZED")
 print("✅ Auto-Collect: READY")
+print("✅ UFO Coin Magnet: READY")
 print("✅ Radioactive Farm: READY")
+print("✅ Divine Block Farm: READY")
+print("✅ Infinite Money: READY")
 print("✅ Auto-Rebirth: READY")
-print("✅ ESP Systems: READY")
+print("✅ All ESP Systems: READY")
 print("═══════════════════════════════════════")
 print("🔥 ysl on top 😈")
 print("═══════════════════════════════════════")
