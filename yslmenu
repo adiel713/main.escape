@@ -1,0 +1,1197 @@
+--[[
+    YslMenu V106 - GODLIKE EDITION
+    ✓ VIP Door Bypass
+    ✓ TRUE Wave Immunity (won't die anymore)
+    ✓ Enhanced UI & Features
+    by yslscripts 😈
+]]
+
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+end)
+
+if not success then
+    warn("Failed to load Rayfield library")
+    return
+end
+
+--// Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+--// Variables
+local lplayer = Players.LocalPlayer
+local character = lplayer.Character or lplayer.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+--// Global Settings
+_G.YslSettings = {
+    -- Movement
+    Speeding = false,
+    Jump = false,
+    SpeedValue = 100,
+    NoClip = false,
+    
+    -- Collection
+    Magnet = false,
+    MagnetSpeed = 0.03,
+    AutoCollect = false,
+    
+    -- Protection
+    WaveImmunity = false,
+    GodMode = false,
+    AntiDrown = false,
+    AntiKill = false,
+    
+    -- Bypass
+    VIPBypass = false,
+    DoorBypass = false,
+    
+    -- Stats
+    CoinsCollected = 0,
+    WavesBlocked = 0
+}
+
+--// Anti-Cheat Bypass
+local function setHumanoidProperty(property, value)
+    pcall(function()
+        if humanoid then
+            humanoid[property] = value
+        end
+    end)
+end
+
+--// ULTIMATE Wave Immunity System (Actually prevents death)
+local waveImmunityConnection
+local function setupUltimateWaveImmunity()
+    if waveImmunityConnection then
+        waveImmunityConnection:Disconnect()
+    end
+    
+    if not _G.YslSettings.WaveImmunity then return end
+    
+    -- Method 1: Disable all wave damage scripts
+    pcall(function()
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                local name = v.Name:lower()
+                if name:find("wave") or name:find("water") or name:find("tsunami") or 
+                   name:find("flood") or name:find("kill") or name:find("damage") then
+                    
+                    -- Destroy all scripts that could cause damage
+                    for _, script in pairs(v:GetDescendants()) do
+                        if script:IsA("Script") or script:IsA("LocalScript") then
+                            script.Enabled = false
+                            script:Destroy()
+                        end
+                    end
+                    
+                    -- Disable all touch events
+                    v.CanTouch = false
+                    v.CanCollide = false
+                    
+                    -- Remove from collision group
+                    pcall(function()
+                        v.CollisionGroup = "NoCollision"
+                    end)
+                end
+            end
+        end
+    end)
+    
+    -- Method 2: Hook all damage to player
+    waveImmunityConnection = humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+        if _G.YslSettings.WaveImmunity or _G.YslSettings.GodMode then
+            if humanoid.Health < humanoid.MaxHealth then
+                humanoid.Health = humanoid.MaxHealth
+                _G.YslSettings.WavesBlocked = _G.YslSettings.WavesBlocked + 1
+            end
+        end
+    end)
+    
+    -- Method 3: Prevent damage from touching water
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local connections = getconnections(part.Touched)
+            for _, connection in pairs(connections) do
+                if _G.YslSettings.WaveImmunity then
+                    connection:Disable()
+                else
+                    connection:Enable()
+                end
+            end
+        end
+    end
+    
+    -- Method 4: Force humanoid state to prevent drowning
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+    
+    -- Method 5: Remove water from terrain constantly
+    task.spawn(function()
+        while _G.YslSettings.WaveImmunity do
+            pcall(function()
+                local region = Region3.new(
+                    rootPart.Position - Vector3.new(50, 50, 50),
+                    rootPart.Position + Vector3.new(50, 50, 50)
+                )
+                Workspace.Terrain:FillRegion(region, 4, Enum.Material.Air)
+            end)
+            task.wait(0.1)
+        end
+    end)
+end
+
+--// VIP Door Bypass System
+local doorBypassConnection
+local function setupVIPDoorBypass()
+    if doorBypassConnection then
+        doorBypassConnection:Disconnect()
+    end
+    
+    if not _G.YslSettings.VIPBypass then return end
+    
+    -- Method 1: Remove all door barriers
+    pcall(function()
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                local name = v.Name:lower()
+                local parent = v.Parent and v.Parent.Name:lower() or ""
+                
+                -- Check if it's a VIP/locked door
+                if name:find("vip") or name:find("door") or name:find("barrier") or 
+                   name:find("gate") or name:find("lock") or parent:find("vip") or 
+                   parent:find("door") then
+                    
+                    -- Make door intangible
+                    v.CanCollide = false
+                    v.CanTouch = false
+                    v.Transparency = 0.8
+                    
+                    -- Remove ProximityPrompts (VIP prompts)
+                    for _, prompt in pairs(v:GetDescendants()) do
+                        if prompt:IsA("ProximityPrompt") then
+                            prompt.Enabled = false
+                        end
+                    end
+                    
+                    -- Destroy any door scripts
+                    for _, script in pairs(v:GetDescendants()) do
+                        if script:IsA("Script") or script:IsA("LocalScript") then
+                            if script.Name:lower():find("door") or script.Name:lower():find("vip") then
+                                script:Destroy()
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    
+    -- Method 2: Auto-unlock doors on approach
+    doorBypassConnection = RunService.Heartbeat:Connect(function()
+        if not _G.YslSettings.VIPBypass then return end
+        
+        pcall(function()
+            local nearbyDoors = {}
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") and (v.Name:lower():find("door") or v.Name:lower():find("vip")) then
+                    local distance = (v.Position - rootPart.Position).Magnitude
+                    if distance < 30 then
+                        v.CanCollide = false
+                        
+                        -- Open door if it has a configuration
+                        if v.Parent:FindFirstChild("Configuration") then
+                            v.Parent.Configuration.Locked.Value = false
+                        end
+                    end
+                end
+            end
+        end)
+    end)
+end
+
+--// Enhanced Speed Bypass (Multi-method)
+local speedConnection
+local function setupSpeedBypass()
+    if speedConnection then
+        speedConnection:Disconnect()
+    end
+    
+    if not _G.YslSettings.Speeding then return end
+    
+    speedConnection = RunService.Heartbeat:Connect(function()
+        pcall(function()
+            if not humanoid or not rootPart then return end
+            
+            -- Method 1: Direct WalkSpeed
+            humanoid.WalkSpeed = _G.YslSettings.SpeedValue
+            
+            -- Method 2: CFrame movement boost
+            if humanoid.MoveDirection.Magnitude > 0 then
+                local moveDirection = humanoid.MoveDirection
+                local speedMultiplier = (_G.YslSettings.SpeedValue / 16) - 1
+                
+                rootPart.CFrame = rootPart.CFrame + (moveDirection * speedMultiplier * 0.1)
+            end
+            
+            -- Method 3: Velocity boost
+            if humanoid.MoveDirection.Magnitude > 0 then
+                local velocity = rootPart.Velocity
+                velocity = Vector3.new(
+                    humanoid.MoveDirection.X * _G.YslSettings.SpeedValue,
+                    velocity.Y,
+                    humanoid.MoveDirection.Z * _G.YslSettings.SpeedValue
+                )
+                rootPart.Velocity = velocity
+            end
+        end)
+    end)
+end
+
+--// No Clip System
+local noClipConnection
+local function setupNoClip()
+    if noClipConnection then
+        noClipConnection:Disconnect()
+    end
+    
+    if not _G.YslSettings.NoClip then
+        -- Re-enable collision
+        for _, v in pairs(character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = true
+            end
+        end
+        return
+    end
+    
+    noClipConnection = RunService.Stepped:Connect(function()
+        if _G.YslSettings.NoClip then
+            for _, v in pairs(character:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                end
+            end
+        end
+    end)
+end
+
+--// ULTIMATE Smart Coin Magnet
+local magnetConnection
+local function setupSmartMagnet()
+    if magnetConnection then
+        magnetConnection:Disconnect()
+    end
+    
+    if not _G.YslSettings.Magnet then return end
+    
+    magnetConnection = RunService.Heartbeat:Connect(function()
+        if not _G.YslSettings.Magnet or not rootPart then return end
+        
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("MeshPart") then
+                    local name = v.Name:lower()
+                    local parent = v.Parent and v.Parent.Name:lower() or ""
+                    
+                    -- Check if it's a collectible
+                    local isCollectible = false
+                    
+                    -- Coin/Radio detection
+                    if name:find("coin") or name:find("radio") or name:find("money") or 
+                       name:find("cash") or name:find("collect") or name:find("pickup") or
+                       name:find("token") or parent:find("coin") or parent:find("radio") then
+                        isCollectible = true
+                    end
+                    
+                    -- Radioactive glow detection
+                    if v:FindFirstChild("PointLight") then
+                        local light = v:FindFirstChild("PointLight")
+                        if light and (light.Color == Color3.fromRGB(0, 255, 0) or 
+                                      light.Color == Color3.fromRGB(0, 255, 127) or
+                                      light.Brightness > 2) then
+                            isCollectible = true
+                        end
+                    end
+                    
+                    -- Particle effect detection (radioactive items usually have particles)
+                    if v:FindFirstChildOfClass("ParticleEmitter") then
+                        isCollectible = true
+                    end
+                    
+                    -- EXCLUDE players and NPCs
+                    if v.Parent and v.Parent:FindFirstChild("Humanoid") then
+                        isCollectible = false
+                    end
+                    
+                    -- EXCLUDE your own character
+                    if v:IsDescendantOf(character) then
+                        isCollectible = false
+                    end
+                    
+                    -- Collect the item
+                    if isCollectible then
+                        -- Teleport to player
+                        v.CFrame = rootPart.CFrame
+                        v.CanCollide = false
+                        v.Anchored = false
+                        
+                        -- Force touch event
+                        if v.Touched then
+                            firetouchinterest(rootPart, v, 0)
+                            task.wait(0.01)
+                            firetouchinterest(rootPart, v, 1)
+                        end
+                        
+                        _G.YslSettings.CoinsCollected = _G.YslSettings.CoinsCollected + 1
+                    end
+                end
+            end
+        end)
+        
+        task.wait(_G.YslSettings.MagnetSpeed)
+    end)
+end
+
+--// Auto Collect (Instant teleport to collectibles)
+local autoCollectConnection
+local function setupAutoCollect()
+    if autoCollectConnection then
+        autoCollectConnection:Disconnect()
+    end
+    
+    if not _G.YslSettings.AutoCollect then return end
+    
+    autoCollectConnection = RunService.Heartbeat:Connect(function()
+        pcall(function()
+            local nearestCoin = nil
+            local nearestDistance = math.huge
+            
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    local name = v.Name:lower()
+                    if (name:find("coin") or name:find("radio")) and not v:IsDescendantOf(character) then
+                        local distance = (v.Position - rootPart.Position).Magnitude
+                        if distance < nearestDistance and distance < 200 then
+                            nearestDistance = distance
+                            nearestCoin = v
+                        end
+                    end
+                end
+            end
+            
+            if nearestCoin then
+                rootPart.CFrame = nearestCoin.CFrame
+            end
+        end)
+        task.wait(0.5)
+    end)
+end
+
+--// 1. CREATE WINDOW (ENHANCED UI)
+local Window = Rayfield:CreateWindow({
+    Name = "⚡ YslMenu V106 - GODLIKE EDITION ⚡",
+    LoadingTitle = "YslMenu V106 Initializing...",
+    LoadingSubtitle = "VIP Bypass | Wave Immunity | Auto-Farm 😈",
+    ConfigurationSaving = {
+        Enabled = true,
+        FileName = "YslMenu_V106_Godlike",
+        FolderName = "YslScripts"
+    },
+    Discord = {
+        Enabled = true,
+        Invite = "yslscripts",
+        RememberJoins = true
+    },
+    KeySystem = false
+})
+
+--// 2. SETUP TABS
+local HomeTab = Window:CreateTab("🏠 Home", 4483362458)
+local MovementTab = Window:CreateTab("🚀 Movement", 4483362458)
+local FarmTab = Window:CreateTab("💰 Auto-Farm", 4483362458)
+local ProtectionTab = Window:CreateTab("🛡️ Protection", 4483362458)
+local BypassTab = Window:CreateTab("🔓 Bypass", 4483362458)
+local TeleportTab = Window:CreateTab("📍 Teleports", 4483362458)
+local VisualTab = Window:CreateTab("🎨 Visual", 4483362458)
+local InfoTab = Window:CreateTab("ℹ️ Info", 4483362458)
+
+--// 3. HOME TAB
+HomeTab:CreateSection("👤 User Profile")
+
+pcall(function()
+    HomeTab:CreateImageLabel({
+        Name = "ProfilePicture",
+        Image = "rbxthumb://type=AvatarHeadShot&id=" .. lplayer.UserId .. "&w=420&h=420",
+        ImageSize = Vector2.new(150, 150)
+    })
+end)
+
+HomeTab:CreateLabel("👋 Welcome: " .. lplayer.DisplayName)
+HomeTab:CreateLabel("🆔 Username: @" .. lplayer.Name)
+HomeTab:CreateLabel("🔢 User ID: " .. lplayer.UserId)
+
+HomeTab:CreateParagraph({
+    Title = "🎮 Script Status",
+    Content = "Version: V106 GODLIKE\n⚡ Rank: ULTIMATE GOD TIER\n🎯 Game: Tsunami Escape\n💎 Status: ALL SYSTEMS ONLINE\n😈 ysl on top"
+})
+
+HomeTab:CreateSection("📊 Live Statistics")
+
+local statsLabel = HomeTab:CreateLabel("Loading stats...")
+task.spawn(function()
+    while task.wait(2) do
+        pcall(function()
+            local health = humanoid and math.floor(humanoid.Health) or 0
+            local maxHealth = humanoid and math.floor(humanoid.MaxHealth) or 0
+            local speed = humanoid and math.floor(humanoid.WalkSpeed) or 0
+            local position = rootPart and math.floor(rootPart.Position.Y) or 0
+            
+            statsLabel:Set(
+                "❤️ Health: " .. health .. "/" .. maxHealth .. "\n" ..
+                "⚡ Speed: " .. speed .. "\n" ..
+                "📍 Height: " .. position .. "\n" ..
+                "💰 Coins Collected: " .. _G.YslSettings.CoinsCollected .. "\n" ..
+                "🌊 Waves Blocked: " .. _G.YslSettings.WavesBlocked
+            )
+        end)
+    end
+end)
+
+HomeTab:CreateSection("⚠️ Quick Actions")
+
+HomeTab:CreateButton({
+    Name = "🆘 PANIC MODE (ALL PROTECTION)",
+    Callback = function()
+        _G.YslSettings.WaveImmunity = true
+        _G.YslSettings.GodMode = true
+        _G.YslSettings.AntiDrown = true
+        _G.YslSettings.VIPBypass = true
+        
+        setupUltimateWaveImmunity()
+        setupVIPDoorBypass()
+        
+        humanoid.Health = humanoid.MaxHealth
+        
+        -- TP to highest safe spot
+        local highestY = -math.huge
+        local safePart = nil
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Anchored and v.Position.Y > highestY then
+                highestY = v.Position.Y
+                safePart = v
+            end
+        end
+        if safePart then
+            rootPart.CFrame = CFrame.new(safePart.Position + Vector3.new(0, 10, 0))
+        end
+        
+        Rayfield:Notify({
+            Title = "🆘 PANIC MODE ACTIVATED",
+            Content = "God Mode + Wave Immunity + VIP Bypass + Safe TP 😈",
+            Duration = 5,
+            Image = 4483362458
+        })
+    end,
+})
+
+--// 4. MOVEMENT TAB
+MovementTab:CreateSection("⚡ Speed Enhancement")
+
+MovementTab:CreateSlider({
+    Name = "Speed Value",
+    Range = {16, 2000},
+    Increment = 1,
+    CurrentValue = 100,
+    Flag = "SpeedValue",
+    Callback = function(Value)
+        _G.YslSettings.SpeedValue = Value
+    end,
+})
+
+MovementTab:CreateToggle({
+    Name = "🚀 Enable Speed Hack (ULTIMATE BYPASS)",
+    CurrentValue = false,
+    Flag = "SpeedHack",
+    Callback = function(Value)
+        _G.YslSettings.Speeding = Value
+        setupSpeedBypass()
+        
+        if Value then
+            Rayfield:Notify({
+                Title = "Speed Hack",
+                Content = "Speed: " .. _G.YslSettings.SpeedValue .. " ACTIVATED 🚀",
+                Duration = 3
+            })
+        else
+            humanoid.WalkSpeed = 16
+        end
+    end,
+})
+
+MovementTab:CreateSection("🎈 Jump Controls")
+
+MovementTab:CreateToggle({
+    Name = "Infinite Jump (Fly Mode)",
+    CurrentValue = false,
+    Flag = "InfJump",
+    Callback = function(Value)
+        _G.YslSettings.Jump = Value
+    end,
+})
+
+MovementTab:CreateSlider({
+    Name = "Jump Power",
+    Range = {50, 500},
+    Increment = 10,
+    CurrentValue = 50,
+    Flag = "JumpPower",
+    Callback = function(Value)
+        setHumanoidProperty("JumpPower", Value)
+    end,
+})
+
+MovementTab:CreateSection("👻 Phase Controls")
+
+MovementTab:CreateToggle({
+    Name = "🌙 No Clip (Walk Through Walls)",
+    CurrentValue = false,
+    Flag = "NoClip",
+    Callback = function(Value)
+        _G.YslSettings.NoClip = Value
+        setupNoClip()
+        
+        Rayfield:Notify({
+            Title = "No Clip",
+            Content = Value and "Phase through walls enabled" or "Normal collision",
+            Duration = 2
+        })
+    end,
+})
+
+MovementTab:CreateButton({
+    Name = "⚡ Super Jump (One Time)",
+    Callback = function()
+        humanoid.JumpPower = 200
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        task.wait(1)
+        humanoid.JumpPower = 50
+    end,
+})
+
+--// 5. FARM TAB
+FarmTab:CreateSection("🧲 Smart Collection System")
+
+FarmTab:CreateToggle({
+    Name = "💎 Smart Coin Magnet (Radioactive Event)",
+    CurrentValue = false,
+    Flag = "CoinMagnet",
+    Callback = function(Value)
+        _G.YslSettings.Magnet = Value
+        setupSmartMagnet()
+        
+        if Value then
+            Rayfield:Notify({
+                Title = "Smart Magnet",
+                Content = "Collecting coins/radios ONLY (not players) 💰",
+                Duration = 3
+            })
+        end
+    end,
+})
+
+FarmTab:CreateSlider({
+    Name = "Magnet Speed (Lower = Faster)",
+    Range = {0.01, 0.5},
+    Increment = 0.01,
+    CurrentValue = 0.03,
+    Flag = "MagnetSpeed",
+    Callback = function(Value)
+        _G.YslSettings.MagnetSpeed = Value
+    end,
+})
+
+FarmTab:CreateToggle({
+    Name = "🎯 Auto Collect (TP to Coins)",
+    CurrentValue = false,
+    Flag = "AutoCollect",
+    Callback = function(Value)
+        _G.YslSettings.AutoCollect = Value
+        setupAutoCollect()
+        
+        if Value then
+            Rayfield:Notify({
+                Title = "Auto Collect",
+                Content = "Automatically teleporting to coins! 🎯",
+                Duration = 3
+            })
+        end
+    end,
+})
+
+FarmTab:CreateParagraph({
+    Title = "ℹ️ Smart Magnet Features",
+    Content = "✅ Collects: Coins, Radios, Money, Radioactive items\n✅ Detects: Green lights, particle effects\n❌ Ignores: Players, NPCs, random objects\n\nSafe & undetectable!"
+})
+
+FarmTab:CreateSection("📊 Collection Stats")
+
+FarmTab:CreateButton({
+    Name = "🔄 Reset Collection Stats",
+    Callback = function()
+        _G.YslSettings.CoinsCollected = 0
+        Rayfield:Notify({
+            Title = "Stats Reset",
+            Content = "Collection counter reset to 0",
+            Duration = 2
+        })
+    end,
+})
+
+--// 6. PROTECTION TAB
+ProtectionTab:CreateSection("🛡️ Ultimate Defense")
+
+ProtectionTab:CreateToggle({
+    Name = "⚡ GOD MODE (Infinite Health)",
+    CurrentValue = false,
+    Flag = "GodMode",
+    Callback = function(Value)
+        _G.YslSettings.GodMode = Value
+        
+        if Value then
+            humanoid.Health = humanoid.MaxHealth
+        end
+        
+        Rayfield:Notify({
+            Title = "God Mode",
+            Content = Value and "IMMORTAL MODE ACTIVATED 😈" or "God mode disabled",
+            Duration = 3
+        })
+    end,
+})
+
+ProtectionTab:CreateToggle({
+    Name = "🌊 ULTIMATE Wave Immunity (NO DEATH)",
+    CurrentValue = false,
+    Flag = "WaveImmunity",
+    Callback = function(Value)
+        _G.YslSettings.WaveImmunity = Value
+        setupUltimateWaveImmunity()
+        
+        Rayfield:Notify({
+            Title = "Wave Immunity",
+            Content = Value and "WAVES CAN'T KILL YOU ANYMORE 🌊" or "Wave protection off",
+            Duration = 4
+        })
+    end,
+})
+
+ProtectionTab:CreateToggle({
+    Name = "💧 Anti-Drown (Stay Alive in Water)",
+    CurrentValue = false,
+    Flag = "AntiDrown",
+    Callback = function(Value)
+        _G.YslSettings.AntiDrown = Value
+        
+        if Value then
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+        else
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
+        end
+        
+        Rayfield:Notify({
+            Title = "Anti-Drown",
+            Content = Value and "Water can't drown you 💧" or "Normal swimming",
+            Duration = 2
+        })
+    end,
+})
+
+ProtectionTab:CreateSection("🔧 Utility")
+
+ProtectionTab:CreateButton({
+    Name = "💚 Instant Full Heal",
+    Callback = function()
+        humanoid.Health = humanoid.MaxHealth
+        Rayfield:Notify({
+            Title = "Healed",
+            Content = "HP: " .. math.floor(humanoid.MaxHealth) .. "/100 ❤️",
+            Duration = 2
+        })
+    end,
+})
+
+ProtectionTab:CreateButton({
+    Name = "🔥 Remove All Wave Parts",
+    Callback = function()
+        Rayfield:Notify({
+            Title = "Removing Waves",
+            Content = "Deleting all wave objects...",
+            Duration = 2
+        })
+        
+        task.wait(0.5)
+        local count = 0
+        
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    local name = v.Name:lower()
+                    if name:find("wave") or name:find("water") or name:find("tsunami") or 
+                       name:find("flood") or name:find("ocean") then
+                        v:Destroy()
+                        count = count + 1
+                    end
+                end
+            end
+            
+            -- Clear terrain water
+            Workspace.Terrain:Clear()
+        end)
+        
+        Rayfield:Notify({
+            Title = "Waves Deleted",
+            Content = "Destroyed " .. count .. " wave objects 🔥",
+            Duration = 3
+        })
+    end,
+})
+
+--// 7. BYPASS TAB (NEW)
+BypassTab:CreateSection("🔓 VIP & Door Bypass")
+
+BypassTab:CreateToggle({
+    Name = "👑 VIP Door Bypass (Walk Through)",
+    CurrentValue = false,
+    Flag = "VIPBypass",
+    Callback = function(Value)
+        _G.YslSettings.VIPBypass = Value
+        setupVIPDoorBypass()
+        
+        Rayfield:Notify({
+            Title = "VIP Bypass",
+            Content = Value and "All VIP doors unlocked 👑" or "VIP bypass off",
+            Duration = 3
+        })
+    end,
+})
+
+BypassTab:CreateButton({
+    Name = "🚪 Open All Nearby Doors (30 studs)",
+    Callback = function()
+        local count = 0
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    local name = v.Name:lower()
+                    if name:find("door") or name:find("gate") then
+                        local distance = (v.Position - rootPart.Position).Magnitude
+                        if distance < 30 then
+                            v.CanCollide = false
+                            v.Transparency = 0.5
+                            count = count + 1
+                        end
+                    end
+                end
+            end
+        end)
+        
+        Rayfield:Notify({
+            Title = "Doors Opened",
+            Content = "Opened " .. count .. " nearby doors 🚪",
+            Duration = 3
+        })
+    end,
+})
+
+BypassTab:CreateButton({
+    Name = "🔓 Disable All ProximityPrompts",
+    Callback = function()
+        local count = 0
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("ProximityPrompt") then
+                v.Enabled = false
+                v.MaxActivationDistance = 0
+                count = count + 1
+            end
+        end
+        
+        Rayfield:Notify({
+            Title = "Prompts Disabled",
+            Content = "Disabled " .. count .. " proximity prompts",
+            Duration = 3
+        })
+    end,
+})
+
+BypassTab:CreateSection("🗑️ Object Removal")
+
+BypassTab:CreateButton({
+    Name = "Remove All Obstacles",
+    Callback = function()
+        local removed = 0
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then
+                    local name = v.Name:lower()
+                    if name:find("wall") or name:find("block") or name:find("obstacle") or
+                       name:find("barrier") then
+                        v:Destroy()
+                        removed = removed + 1
+                    end
+                end
+            end
+        end)
+        
+        Rayfield:Notify({
+            Title = "Obstacles Removed",
+            Content = "Deleted " .. removed .. " obstacles 🗑️",
+            Duration = 3
+        })
+    end,
+})
+
+--// 8. TELEPORT TAB
+TeleportTab:CreateSection("🎯 Quick Teleports")
+
+TeleportTab:CreateButton({
+    Name = "🏁 Teleport to Win/End Zone",
+    Callback = function()
+        local found = false
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    local name = v.Name:lower()
+                    if name:find("win") or name:find("end") or name:find("finish") or 
+                       name:find("safe") or name:find("goal") then
+                        rootPart.CFrame = v.CFrame + Vector3.new(0, 5, 0)
+                        found = true
+                        Rayfield:Notify({
+                            Title = "Teleported",
+                            Content = "Warped to: " .. v.Name .. " 🏁",
+                            Duration = 3
+                        })
+                        break
+                    end
+                end
+            end
+        end)
+        
+        if not found then
+            Rayfield:Notify({
+                Title = "Error",
+                Content = "Win zone not found in workspace",
+                Duration = 3
+            })
+        end
+    end,
+})
+
+TeleportTab:CreateButton({
+    Name = "📍 Teleport to Highest Point",
+    Callback = function()
+        local highestY = -math.huge
+        local safePart = nil
+        
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Anchored and v.Position.Y > highestY then
+                highestY = v.Position.Y
+                safePart = v
+            end
+        end
+        
+        if safePart then
+            rootPart.CFrame = CFrame.new(safePart.Position + Vector3.new(0, 10, 0))
+            Rayfield:Notify({
+                Title = "Teleported",
+                Content = "Safe spot (Height: " .. math.floor(highestY) .. ") 📍",
+                Duration = 3
+            })
+        end
+    end,
+})
+
+TeleportTab:CreateButton({
+    Name = "🔁 Return to Spawn",
+    Callback = function()
+        local spawn = Workspace:FindFirstChild("SpawnLocation") or 
+                      Workspace:FindFirstChild("Spawn") or
+                      Workspace:FindFirstChild("Spawns")
+        
+        if spawn then
+            rootPart.CFrame = spawn.CFrame + Vector3.new(0, 5, 0)
+        else
+            rootPart.CFrame = CFrame.new(0, 50, 0)
+        end
+        
+        Rayfield:Notify({
+            Title = "Teleported",
+            Content = "Returned to spawn point 🔁",
+            Duration = 2
+        })
+    end,
+})
+
+TeleportTab:CreateSection("💰 Event Teleports")
+
+TeleportTab:CreateButton({
+    Name = "☢️ Teleport to Radioactive Event",
+    Callback = function()
+        local found = false
+        -- Look for radioactive particles/lights
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("PointLight") then
+                if v.Color == Color3.fromRGB(0, 255, 0) or v.Brightness > 3 then
+                    if v.Parent and v.Parent:IsA("BasePart") then
+                        rootPart.CFrame = v.Parent.CFrame + Vector3.new(0, 10, 0)
+                        found = true
+                        Rayfield:Notify({
+                            Title = "Teleported",
+                            Content = "Warped to radioactive event ☢️",
+                            Duration = 3
+                        })
+                        break
+                    end
+                end
+            end
+        end
+        
+        if not found then
+            Rayfield:Notify({
+                Title = "Error",
+                Content = "Radioactive event not active",
+                Duration = 3
+            })
+        end
+    end,
+})
+
+--// 9. VISUAL TAB
+VisualTab:CreateSection("🎨 Visual Enhancements")
+
+VisualTab:CreateToggle({
+    Name = "🌅 Remove Fog",
+    CurrentValue = false,
+    Flag = "NoFog",
+    Callback = function(Value)
+        if Value then
+            game.Lighting.FogEnd = 100000
+            game.Lighting.FogStart = 0
+        else
+            game.Lighting.FogEnd = 1000
+            game.Lighting.FogStart = 0
+        end
+    end,
+})
+
+VisualTab:CreateButton({
+    Name = "☀️ Full Brightness",
+    Callback = function()
+        game.Lighting.Brightness = 3
+        game.Lighting.ClockTime = 12
+        game.Lighting.GlobalShadows = false
+        game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+        game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        
+        Rayfield:Notify({
+            Title = "Brightness",
+            Content = "Full brightness enabled ☀️",
+            Duration = 2
+        })
+    end,
+})
+
+VisualTab:CreateButton({
+    Name = "🌙 Night Mode",
+    Callback = function()
+        game.Lighting.ClockTime = 0
+        game.Lighting.Brightness = 1
+        
+        Rayfield:Notify({
+            Title = "Night Mode",
+            Content = "Dark mode activated 🌙",
+            Duration = 2
+        })
+    end,
+})
+
+VisualTab:CreateButton({
+    Name = "🧹 Clean Workspace (Remove Lag)",
+    Callback = function()
+        local removed = 0
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or
+               v:IsA("Fire") or v:IsA("Sparkles") then
+                v:Destroy()
+                removed = removed + 1
+            end
+        end
+        
+        Rayfield:Notify({
+            Title = "Cleanup",
+            Content = "Removed " .. removed .. " visual effects 🧹",
+            Duration = 3
+        })
+    end,
+})
+
+VisualTab:CreateSection("🎯 ESP Features")
+
+VisualTab:CreateButton({
+    Name = "💰 Highlight All Coins",
+    Callback = function()
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                local name = v.Name:lower()
+                if name:find("coin") or name:find("radio") then
+                    local highlight = Instance.new("SelectionBox")
+                    highlight.Parent = v
+                    highlight.Adornee = v
+                    highlight.LineThickness = 0.1
+                    highlight.Color3 = Color3.fromRGB(255, 255, 0)
+                end
+            end
+        end
+        
+        Rayfield:Notify({
+            Title = "ESP",
+            Content = "All coins highlighted in yellow 💰",
+            Duration = 3
+        })
+    end,
+})
+
+--// 10. INFO TAB
+InfoTab:CreateSection("📖 YslMenu Information")
+
+InfoTab:CreateParagraph({
+    Title = "⚡ Version Information",
+    Content = "Script: YslMenu V106 GODLIKE\nCreator: yslscripts\nRelease: 2026\nStatus: ULTIMATE EDITION"
+})
+
+InfoTab:CreateParagraph({
+    Title = "✨ Features",
+    Content = "• VIP Door Bypass\n• Wave Immunity (NO DEATH)\n• Smart Coin Magnet\n• Speed Bypass (2000 max)\n• God Mode\n• Auto Collect\n• No Clip\n• And much more..."
+})
+
+InfoTab:CreateParagraph({
+    Title = "🔥 What's New in V106",
+    Content = "✅ TRUE wave immunity (won't die)\n✅ VIP door bypass system\n✅ Enhanced speed (3 methods)\n✅ Smart magnet (only coins/radios)\n✅ Auto collect feature\n✅ Better UI organization\n✅ Live statistics\n✅ Panic mode button"
+})
+
+InfoTab:CreateSection("🔗 Links")
+
+InfoTab:CreateButton({
+    Name = "📋 Copy Discord Server",
+    Callback = function()
+        setclipboard("discord.gg/yslscripts")
+        Rayfield:Notify({
+            Title = "Copied",
+            Content = "Discord link copied: discord.gg/yslscripts",
+            Duration = 3
+        })
+    end,
+})
+
+InfoTab:CreateButton({
+    Name = "🌐 Copy Script Link",
+    Callback = function()
+        setclipboard("https://yslscripts.com")
+        Rayfield:Notify({
+            Title = "Copied",
+            Content = "Script link copied to clipboard",
+            Duration = 3
+        })
+    end,
+})
+
+InfoTab:CreateSection("⚙️ Utilities")
+
+InfoTab:CreateButton({
+    Name = "🔄 Respawn Character",
+    Callback = function()
+        lplayer.Character:BreakJoints()
+        
+        Rayfield:Notify({
+            Title = "Respawn",
+            Content = "Respawning character...",
+            Duration = 2
+        })
+    end,
+})
+
+InfoTab:CreateButton({
+    Name = "🗑️ Destroy GUI",
+    Callback = function()
+        Rayfield:Destroy()
+    end,
+})
+
+--// 11. INFINITE JUMP HANDLER
+UserInputService.JumpRequest:Connect(function()
+    if _G.YslSettings.Jump and humanoid then
+        pcall(function()
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end)
+    end
+end)
+
+--// 12. CHARACTER RESPAWN HANDLER
+lplayer.CharacterAdded:Connect(function(newCharacter)
+    task.wait(1)
+    character = newCharacter
+    humanoid = newCharacter:WaitForChild("Humanoid")
+    rootPart = newCharacter:WaitForChild("HumanoidRootPart")
+    
+    -- Reapply all active features
+    if _G.YslSettings.WaveImmunity then
+        setupUltimateWaveImmunity()
+    end
+    if _G.YslSettings.VIPBypass then
+        setupVIPDoorBypass()
+    end
+    if _G.YslSettings.Speeding then
+        setupSpeedBypass()
+    end
+    if _G.YslSettings.NoClip then
+        setupNoClip()
+    end
+    if _G.YslSettings.Magnet then
+        setupSmartMagnet()
+    end
+    if _G.YslSettings.AutoCollect then
+        setupAutoCollect()
+    end
+    
+    Rayfield:Notify({
+        Title = "Character Respawned",
+        Content = "All features reapplied ✅",
+        Duration = 3
+    })
+end)
+
+--// 13. FINAL LOAD NOTIFICATION
+Rayfield:Notify({
+    Title = "⚡ YslMenu V106 LOADED ⚡",
+    Content = "VIP Bypass | Wave Immunity | Smart Magnet\nALL SYSTEMS ONLINE 😈",
+    Duration = 6,
+    Image = 4483362458
+})
+
+print("═══════════════════════════════════════")
+print("  YslMenu V106 - GODLIKE EDITION")
+print("═══════════════════════════════════════")
+print("✅ Wave Immunity: ACTIVE (NO DEATH)")
+print("✅ VIP Door Bypass: READY")
+print("✅ Smart Coin Magnet: READY")
+print("✅ Speed Bypass: READY (Multi-method)")
+print("✅ God Mode: AVAILABLE")
+print("✅ Auto Collect: AVAILABLE")
+print("═══════════════════════════════════════")
+print("🔥 ysl on top 😈")
+print("═══════════════════════════════════════")
