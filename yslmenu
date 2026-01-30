@@ -1,373 +1,566 @@
-# Escape Tsunami For Brainrots - Auto Farm Scripts
+--[[
+    ╔═══════════════════════════════════════════════╗
+    ║   ESCAPE TSUNAMI AUTO FARM - GUI VERSION     ║
+    ║   Made for: Escape Tsunami For Brainrots!    ║
+    ╚═══════════════════════════════════════════════╝
+]]
 
-## 📋 Game Information
+print("🌊 Loading Escape Tsunami Menu...")
 
-**Game:** Escape Tsunami For Brainrots!  
-**Link:** https://www.roblox.com/games/131623223084840/Escape-Tsunami-For-Brainrots  
-**Description:** A Roblox tycoon-simulation game where you collect Brainrots while avoiding tsunami waves
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local VirtualUser = game:GetService("VirtualUser")
 
----
+-- Player Variables
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Humanoid = Character:WaitForChild("Humanoid")
 
-## 🎮 Game Mechanics Overview
+-- Script Settings
+local Settings = {
+    Enabled = false,
+    AutoCollect = false,
+    AutoAvoid = false,
+    AutoUpgrade = false,
+    AntiAFK = true,
+    ESPEnabled = false
+}
 
-### Core Gameplay
-1. **Collect Brainrots** - Run across the track and collect valuable Brainrot items
-2. **Avoid Tsunamis** - Dodge waves that spawn every 30-45 seconds
-3. **Return to Base** - Bring Brainrots back safely to generate passive income
-4. **Upgrade** - Use money to buy speed and carry capacity upgrades
-5. **Rebirth** - Reset speed for permanent income multipliers
+-- State Variables
+local BasePosition = Vector3.new(0, 5, 0)
 
-### Brainrot Rarities
-- Common (lowest value)
-- Uncommon
-- Rare
-- Epic
-- Legendary
-- Mythical
-- Cosmic
-- Secret
-- Celestial (highest value - spawns every 10 minutes)
+-- Create ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "TsunamiAutoFarmGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-### Tsunami Types
-- Super Slow Tsunami
-- Slow Tsunami
-- Medium Tsunami
-- Fast Tsunami
-- Lightning Tsunami
+-- Protection against multiple instances
+local existingGui = game.CoreGui:FindFirstChild("TsunamiAutoFarmGUI")
+if existingGui then
+    existingGui:Destroy()
+end
 
----
+ScreenGui.Parent = game.CoreGui
 
-## 📦 Script Files Included
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 500, 0, 600)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -300)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
 
-### 1. `escape_tsunami_script.lua` (ADVANCED)
-**Full-featured script with GUI**
+-- Add rounded corners
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
 
-**Features:**
-✅ Auto Collect Brainrots  
-✅ Auto Avoid Tsunamis  
-✅ Auto Return to Base  
-✅ Auto Upgrade Speed  
-✅ Auto Upgrade Carry Capacity  
-✅ Auto Rebirth  
-✅ Auto Place Brainrots in Base  
-✅ ESP (highlight rare brainrots)  
-✅ Anti-AFK protection  
-✅ Customizable GUI with toggles  
-✅ Safety settings  
+-- Add shadow effect
+local Shadow = Instance.new("ImageLabel")
+Shadow.Name = "Shadow"
+Shadow.Size = UDim2.new(1, 30, 1, 30)
+Shadow.Position = UDim2.new(0, -15, 0, -15)
+Shadow.BackgroundTransparency = 1
+Shadow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.ImageTransparency = 0.5
+Shadow.ZIndex = 0
+Shadow.Parent = MainFrame
 
-**Best for:** Users who want maximum automation and control
+-- Header
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 60)
+Header.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
 
----
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 12)
+HeaderCorner.Parent = Header
 
-### 2. `escape_tsunami_simple.lua` (SIMPLE)
-**Lightweight, easy-to-use version**
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(1, -100, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "🌊 TSUNAMI AUTO FARM"
+Title.TextColor3 = Color3.fromRGB(0, 200, 255)
+Title.TextSize = 24
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
 
-**Features:**
-✅ Auto Collect Brainrots  
-✅ Auto Avoid Tsunamis  
-✅ Auto Upgrade Speed  
-✅ Minimal code - easy to understand  
-✅ No GUI - runs in background  
+-- Version Label
+local Version = Instance.new("TextLabel")
+Version.Size = UDim2.new(0, 100, 0, 20)
+Version.Position = UDim2.new(0, 15, 0, 35)
+Version.BackgroundTransparency = 1
+Version.Text = "v1.0"
+Version.TextColor3 = Color3.fromRGB(150, 150, 150)
+Version.TextSize = 12
+Version.Font = Enum.Font.Gotham
+Version.TextXAlignment = Enum.TextXAlignment.Left
+Version.Parent = Header
 
-**Best for:** Beginners or users who want a simple solution
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 40, 0, 40)
+CloseButton.Position = UDim2.new(1, -50, 0, 10)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+CloseButton.Text = "✕"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 24
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Parent = Header
 
----
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseButton
 
-## 🚀 How to Use
+-- Content Frame
+local Content = Instance.new("ScrollingFrame")
+Content.Name = "Content"
+Content.Size = UDim2.new(1, -20, 1, -80)
+Content.Position = UDim2.new(0, 10, 0, 70)
+Content.BackgroundTransparency = 1
+Content.ScrollBarThickness = 8
+Content.ScrollBarImageColor3 = Color3.fromRGB(0, 200, 255)
+Content.CanvasSize = UDim2.new(0, 0, 0, 0)
+Content.BorderSizePixel = 0
+Content.Parent = MainFrame
 
-### Method 1: Using Roblox Script Executor (Recommended)
+-- Auto-resize canvas
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 10)
+UIListLayout.Parent = Content
 
-1. **Get a Script Executor**
-   - Popular options: Synapse X, Script-Ware, Krnl, Fluxus, Arceus X
-   - Make sure your executor is updated and working
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Content.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 20)
+end)
 
-2. **Load the Script**
-   ```lua
-   -- Copy the entire content of either script file
-   -- Paste it into your executor
-   -- Click Execute/Inject
-   ```
-
-3. **Configure Settings** (Advanced script only)
-   - A GUI will appear on screen
-   - Toggle features ON/OFF as desired
-   - Drag the GUI to reposition it
-
-### Method 2: Using Auto-Execute Folder
-
-1. Place the `.lua` file in your executor's `autoexec` or `scripts` folder
-2. The script will run automatically when you join the game
-
----
-
-## ⚙️ Configuration Guide
-
-### Advanced Script Settings
-
-```lua
-Settings = {
-    AutoFarm = true,              -- Master toggle
-    AutoCollect = true,           -- Collect brainrots automatically
-    AutoAvoidTsunami = true,      -- Dodge waves automatically
-    AutoReturnToBase = true,      -- Return after collecting
-    AutoUpgradeSpeed = true,      -- Buy speed upgrades
-    AutoUpgradeCarry = false,     -- Buy carry upgrades
-    AutoRebirth = false,          -- Auto rebirth (careful!)
+-- Function to create section header
+local function CreateSection(text, layoutOrder)
+    local Section = Instance.new("TextLabel")
+    Section.Name = text
+    Section.Size = UDim2.new(1, -10, 0, 35)
+    Section.BackgroundTransparency = 1
+    Section.Text = "━━━ " .. text .. " ━━━"
+    Section.TextColor3 = Color3.fromRGB(0, 200, 255)
+    Section.TextSize = 18
+    Section.Font = Enum.Font.GothamBold
+    Section.LayoutOrder = layoutOrder
+    Section.Parent = Content
     
-    -- Safety
-    TsunamiDetectionRange = 150,  -- Distance to detect tsunamis
-    MinSpeedForFarming = 16,      -- Min speed before farming starts
+    return Section
+end
+
+-- Function to create toggle button
+local function CreateToggle(name, description, defaultValue, layoutOrder, callback)
+    local ToggleFrame = Instance.new("Frame")
+    ToggleFrame.Name = name .. "Toggle"
+    ToggleFrame.Size = UDim2.new(1, -10, 0, 70)
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    ToggleFrame.BorderSizePixel = 0
+    ToggleFrame.LayoutOrder = layoutOrder
+    ToggleFrame.Parent = Content
     
-    -- Upgrades
-    MaxSpeedUpgrades = 100,       -- Stop upgrading at this level
-    RebirthAtSpeed = 300,         -- Speed threshold for rebirth
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 8)
+    ToggleCorner.Parent = ToggleFrame
     
-    -- Target Rarities (which to collect)
-    TargetRarities = {
-        ["Common"] = false,       -- Skip common
-        ["Uncommon"] = true,
-        ["Rare"] = true,
-        ["Epic"] = true,
-        ["Legendary"] = true,
-        ["Mythical"] = true,
-        ["Cosmic"] = true,
-        ["Secret"] = true,
-        ["Celestial"] = true
+    local ToggleName = Instance.new("TextLabel")
+    ToggleName.Size = UDim2.new(1, -120, 0, 25)
+    ToggleName.Position = UDim2.new(0, 15, 0, 10)
+    ToggleName.BackgroundTransparency = 1
+    ToggleName.Text = name
+    ToggleName.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleName.TextSize = 16
+    ToggleName.Font = Enum.Font.GothamBold
+    ToggleName.TextXAlignment = Enum.TextXAlignment.Left
+    ToggleName.Parent = ToggleFrame
+    
+    local ToggleDesc = Instance.new("TextLabel")
+    ToggleDesc.Size = UDim2.new(1, -120, 0, 20)
+    ToggleDesc.Position = UDim2.new(0, 15, 0, 35)
+    ToggleDesc.BackgroundTransparency = 1
+    ToggleDesc.Text = description
+    ToggleDesc.TextColor3 = Color3.fromRGB(150, 150, 150)
+    ToggleDesc.TextSize = 12
+    ToggleDesc.Font = Enum.Font.Gotham
+    ToggleDesc.TextXAlignment = Enum.TextXAlignment.Left
+    ToggleDesc.Parent = ToggleFrame
+    
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Name = "Button"
+    ToggleButton.Size = UDim2.new(0, 90, 0, 40)
+    ToggleButton.Position = UDim2.new(1, -100, 0.5, -20)
+    ToggleButton.BackgroundColor3 = defaultValue and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(200, 50, 50)
+    ToggleButton.Text = defaultValue and "ON" or "OFF"
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.TextSize = 16
+    ToggleButton.Font = Enum.Font.GothamBold
+    ToggleButton.Parent = ToggleFrame
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 8)
+    ButtonCorner.Parent = ToggleButton
+    
+    local isEnabled = defaultValue
+    
+    ToggleButton.MouseButton1Click:Connect(function()
+        isEnabled = not isEnabled
+        
+        -- Animate color change
+        local goal = {BackgroundColor3 = isEnabled and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(200, 50, 50)}
+        local tween = TweenService:Create(ToggleButton, TweenInfo.new(0.3), goal)
+        tween:Play()
+        
+        ToggleButton.Text = isEnabled and "ON" or "OFF"
+        
+        if callback then
+            callback(isEnabled)
+        end
+    end)
+    
+    return ToggleButton
+end
+
+-- Function to create action button
+local function CreateButton(name, description, layoutOrder, callback)
+    local ButtonFrame = Instance.new("Frame")
+    ButtonFrame.Name = name .. "Button"
+    ButtonFrame.Size = UDim2.new(1, -10, 0, 70)
+    ButtonFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    ButtonFrame.BorderSizePixel = 0
+    ButtonFrame.LayoutOrder = layoutOrder
+    ButtonFrame.Parent = Content
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 8)
+    ButtonCorner.Parent = ButtonFrame
+    
+    local ActionButton = Instance.new("TextButton")
+    ActionButton.Size = UDim2.new(1, -20, 0, 50)
+    ActionButton.Position = UDim2.new(0, 10, 0, 10)
+    ActionButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    ActionButton.Text = name
+    ActionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ActionButton.TextSize = 18
+    ActionButton.Font = Enum.Font.GothamBold
+    ActionButton.Parent = ButtonFrame
+    
+    local ActionCorner = Instance.new("UICorner")
+    ActionCorner.CornerRadius = UDim.new(0, 8)
+    ActionCorner.Parent = ActionButton
+    
+    ActionButton.MouseButton1Click:Connect(function()
+        -- Button press animation
+        ActionButton.Size = UDim2.new(1, -20, 0, 45)
+        wait(0.1)
+        ActionButton.Size = UDim2.new(1, -20, 0, 50)
+        
+        if callback then
+            callback()
+        end
+    end)
+    
+    return ActionButton
+end
+
+-- Status Label
+local StatusFrame = Instance.new("Frame")
+StatusFrame.Name = "StatusFrame"
+StatusFrame.Size = UDim2.new(1, -10, 0, 50)
+StatusFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+StatusFrame.BorderSizePixel = 0
+StatusFrame.LayoutOrder = 100
+StatusFrame.Parent = Content
+
+local StatusCorner = Instance.new("UICorner")
+StatusCorner.CornerRadius = UDim.new(0, 8)
+StatusCorner.Parent = StatusFrame
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 1, 0)
+StatusLabel.Position = UDim2.new(0, 10, 0, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "⚡ Status: Idle"
+StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.TextSize = 16
+StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = StatusFrame
+
+-- Create UI Elements
+CreateSection("🎯 MAIN FEATURES", 1)
+
+CreateToggle("Auto Farm", "Enable automatic brainrot farming", false, 2, function(enabled)
+    Settings.Enabled = enabled
+    if enabled then
+        StatusLabel.Text = "⚡ Status: Farming Active!"
+        StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
+    else
+        StatusLabel.Text = "⚡ Status: Idle"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
+end)
+
+CreateToggle("Auto Collect", "Automatically collect brainrots", false, 3, function(enabled)
+    Settings.AutoCollect = enabled
+end)
+
+CreateToggle("Auto Avoid Tsunami", "Dodge waves automatically", false, 4, function(enabled)
+    Settings.AutoAvoid = enabled
+end)
+
+CreateToggle("Auto Upgrade Speed", "Buy speed upgrades automatically", false, 5, function(enabled)
+    Settings.AutoUpgrade = enabled
+end)
+
+CreateSection("⚙️ UTILITIES", 6)
+
+CreateToggle("ESP (Highlight Items)", "Show brainrot locations", false, 7, function(enabled)
+    Settings.ESPEnabled = enabled
+end)
+
+CreateToggle("Anti-AFK", "Prevent being kicked", true, 8, function(enabled)
+    Settings.AntiAFK = enabled
+end)
+
+CreateSection("🚀 ACTIONS", 9)
+
+CreateButton("🏠 Teleport to Base", "Return to your base instantly", 10, function()
+    if HumanoidRootPart then
+        HumanoidRootPart.CFrame = CFrame.new(BasePosition)
+        StatusLabel.Text = "⚡ Status: Teleported to Base!"
+        wait(2)
+        StatusLabel.Text = Settings.Enabled and "⚡ Status: Farming Active!" or "⚡ Status: Idle"
+    end
+end)
+
+CreateButton("⚡ Buy Speed Upgrade", "Purchase speed boost now", 11, function()
+    local remote = ReplicatedStorage:FindFirstChild("UpgradeSpeed")
+    if remote then
+        remote:FireServer()
+        StatusLabel.Text = "⚡ Status: Speed Upgraded!"
+        wait(2)
+        StatusLabel.Text = Settings.Enabled and "⚡ Status: Farming Active!" or "⚡ Status: Idle"
+    end
+end)
+
+CreateButton("🔄 Reset Character", "Respawn your character", 12, function()
+    if Humanoid then
+        Humanoid.Health = 0
+        StatusLabel.Text = "⚡ Status: Resetting..."
+    end
+end)
+
+-- Close button functionality
+CloseButton.MouseButton1Click:Connect(function()
+    Settings.Enabled = false
+    ScreenGui:Destroy()
+end)
+
+-- Helper Functions
+
+local function UpdateStatus(text)
+    StatusLabel.Text = "⚡ Status: " .. text
+end
+
+local function GetBase()
+    local bases = Workspace:FindFirstChild("Bases")
+    if bases and bases:FindFirstChild(Player.Name) then
+        BasePosition = bases[Player.Name].Position
+        return BasePosition
+    end
+    BasePosition = Vector3.new(0, 5, 0)
+    return BasePosition
+end
+
+local function Teleport(position)
+    if HumanoidRootPart then
+        HumanoidRootPart.CFrame = CFrame.new(position)
+    end
+end
+
+local function CheckTsunami()
+    local tsunamis = Workspace:FindFirstChild("Tsunamis") or Workspace:FindFirstChild("Waves")
+    if tsunamis then
+        for _, wave in pairs(tsunamis:GetChildren()) do
+            local part = wave:IsA("BasePart") and wave or wave:FindFirstChild("Part")
+            if part then
+                local distance = (HumanoidRootPart.Position - part.Position).Magnitude
+                if distance < 150 then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+local function GetBrainrots()
+    local items = {}
+    local folder = Workspace:FindFirstChild("Brainrots") or Workspace:FindFirstChild("Items")
+    if folder then
+        for _, item in pairs(folder:GetChildren()) do
+            table.insert(items, item)
+        end
+    end
+    return items
+end
+
+local function CreateESPForItem(item)
+    if not Settings.ESPEnabled then return end
+    
+    local part = item:IsA("BasePart") and item or item:FindFirstChild("Part")
+    if not part then return end
+    
+    if part:FindFirstChild("ESP") then return end
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESP"
+    billboard.Adornee = part
+    billboard.Size = UDim2.new(0, 100, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = part
+    
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 0.5
+    frame.BackgroundColor3 = Color3.fromRGB(255, 0, 255)
+    frame.Parent = billboard
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = "💎 " .. (item.Name or "Brainrot")
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextStrokeTransparency = 0
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+    label.Parent = frame
+end
+
+-- Main Farm Loop
+task.spawn(function()
+    while wait(0.5) do
+        if not Settings.Enabled then continue end
+        
+        -- Update character reference
+        Character = Player.Character
+        if not Character then continue end
+        HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+        Humanoid = Character:FindFirstChild("Humanoid")
+        if not HumanoidRootPart or not Humanoid then continue end
+        
+        -- Check for tsunami
+        if Settings.AutoAvoid and CheckTsunami() then
+            UpdateStatus("⚠️ TSUNAMI! Going to base...")
+            Teleport(BasePosition)
+            wait(3)
+            continue
+        end
+        
+        -- Auto upgrade
+        if Settings.AutoUpgrade then
+            local remote = ReplicatedStorage:FindFirstChild("UpgradeSpeed")
+            if remote then
+                remote:FireServer()
+            end
+        end
+        
+        -- Auto collect
+        if Settings.AutoCollect then
+            local brainrots = GetBrainrots()
+            
+            if #brainrots > 0 then
+                UpdateStatus("Collecting... (" .. #brainrots .. " items)")
+                
+                for i, brainrot in pairs(brainrots) do
+                    if not Settings.Enabled then break end
+                    if CheckTsunami() and Settings.AutoAvoid then break end
+                    
+                    CreateESPForItem(brainrot)
+                    
+                    local part = brainrot:IsA("BasePart") and brainrot or brainrot:FindFirstChild("Part")
+                    if part then
+                        Teleport(part.Position)
+                        wait(0.2)
+                        
+                        -- Return to base periodically
+                        if i % 5 == 0 then
+                            Teleport(BasePosition)
+                            wait(0.3)
+                        end
+                    end
+                end
+            else
+                UpdateStatus("Searching for brainrots...")
+            end
+        end
+    end
+end)
+
+-- Anti-AFK
+Player.Idled:Connect(function()
+    if Settings.AntiAFK then
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end
+end)
+
+-- Character respawn handler
+Player.CharacterAdded:Connect(function(char)
+    Character = char
+    Humanoid = Character:WaitForChild("Humanoid")
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+    wait(2)
+    BasePosition = GetBase()
+end)
+
+-- Initialize
+task.spawn(function()
+    wait(2)
+    BasePosition = GetBase()
+    print("✅ Tsunami Auto Farm GUI Loaded!")
+    print("🎮 Use the menu to control farming")
+end)
+
+-- Entrance animation
+MainFrame.Size = UDim2.new(0, 0, 0, 0)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+local openTween = TweenService:Create(
+    MainFrame,
+    TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+    {
+        Size = UDim2.new(0, 500, 0, 600),
+        Position = UDim2.new(0.5, -250, 0.5, -300)
     }
-}
-```
+)
+openTween:Play()
 
-### Simple Script Settings
-
-```lua
-Config = {
-    AutoCollect = true,           -- Auto collect brainrots
-    AutoAvoidTsunami = true,      -- Auto dodge waves
-    AutoUpgrade = true,           -- Auto buy upgrades
-    TsunamiDistance = 150,        -- Detection range
-    WaitTime = 0.5                -- Loop delay
-}
-```
-
----
-
-## 🎯 Strategy Tips
-
-### Early Game (Speed 0-50)
-- Focus on collecting Common/Uncommon brainrots close to base
-- Upgrade speed first, carry capacity later
-- Don't venture too far - tsunamis are deadly when slow
-
-### Mid Game (Speed 50-150)
-- Target Rare and Epic brainrots
-- Balance speed and carry upgrades
-- Learn tsunami timing patterns
-
-### Late Game (Speed 150+)
-- Go for Legendary, Mythical, Cosmic brainrots
-- Consider rebirth for income multipliers
-- Use VIP safe zones if you have them
-
-### Pro Tips
-- Tsunami waves come from the far end every 30-45 seconds
-- Safe zones (trenches) are your best friend early game
-- VIP pass (99 Robux) gives wall safe spots
-- Celestial brainrots spawn every 10 minutes at the far end
-- Don't get greedy - surviving is more important than collecting
-
----
-
-## 🛡️ Safety Features
-
-Both scripts include:
-- **Anti-Detection**: Normal-looking behavior patterns
-- **Error Handling**: Won't crash if game updates
-- **Anti-AFK**: Keeps you from being kicked
-- **Character Respawn**: Continues working after death
-
----
-
-## ⚠️ Important Notes
-
-### Game Updates
-If the script stops working after a game update:
-1. Check if object names changed (Brainrots folder, Events, etc.)
-2. Look in F9 console for error messages
-3. Update the script paths accordingly
-
-### Common Issues & Fixes
-
-**Script not collecting:**
-- Make sure "Auto Collect" is enabled
-- Check if your speed is above MinSpeedForFarming
-- Verify the Brainrots folder exists in Workspace
-
-**Not avoiding tsunamis:**
-- Increase TsunamiDetectionRange
-- Make sure "Auto Avoid Tsunami" is ON
-- Check if Tsunami folder name changed
-
-**Upgrades not working:**
-- Game may have changed remote event names
-- Check ReplicatedStorage for new paths
-- Try simple script first to test
-
-**Character stuck:**
-- Disable AutoFarm, reset character manually
-- Re-enable and it should work again
-
----
-
-## 🔧 Customization Examples
-
-### Only Collect Legendary or Better
-```lua
-TargetRarities = {
-    ["Common"] = false,
-    ["Uncommon"] = false,
-    ["Rare"] = false,
-    ["Epic"] = false,
-    ["Legendary"] = true,
-    ["Mythical"] = true,
-    ["Cosmic"] = true,
-    ["Secret"] = true,
-    ["Celestial"] = true
-}
-```
-
-### Super Safe Mode (Large Detection Range)
-```lua
-TsunamiDetectionRange = 250  -- Very safe
-MinSpeedForFarming = 25      -- Only farm when fast
-```
-
-### Speed Demon Mode (Risky but Fast)
-```lua
-TsunamiDetectionRange = 100  -- Close calls
-MinSpeedForFarming = 10      -- Farm early
-WaitTime = 0.2               -- Faster loop
-```
-
----
-
-## 📊 Expected Results
-
-### Typical Performance
-- **Common Brainrots:** 50-100 per hour
-- **Rare+ Brainrots:** 20-50 per hour
-- **Money Generation:** Depends on brainrot quality
-- **Safety Rate:** 95%+ survival rate with default settings
-
-### Optimization
-For best results:
-1. Let it run for 10-15 minutes to build speed
-2. Enable AutoUpgradeSpeed early
-3. Enable AutoRebirth after first 2-3 rebirths
-4. Use ESP to verify it's targeting good brainrots
-
----
-
-## 🎮 Controls
-
-### Advanced Script
-- **Drag GUI:** Click and hold title bar
-- **Close GUI:** Click X button (script keeps running)
-- **Toggle Feature:** Click ON/OFF buttons
-
-### Simple Script
-- **No GUI:** Everything runs automatically
-- **Stop Script:** Delete or close executor
-- **See Status:** Press F9 to open console
-
----
-
-## ⭐ Recommended Setup
-
-**For Beginners:**
-```
-Use: escape_tsunami_simple.lua
-Settings: All defaults
-Let it run for 30 minutes, then check progress
-```
-
-**For Advanced Users:**
-```
-Use: escape_tsunami_script.lua
-Enable: AutoFarm, AutoCollect, AutoAvoid, AutoUpgradeSpeed
-Disable: AutoRebirth (until you understand it)
-Target: Uncommon and above
-```
-
-**For AFK Farming:**
-```
-Use: escape_tsunami_script.lua
-Enable: Everything except AutoRebirth
-Set: TsunamiDetectionRange = 200 (very safe)
-Set: MinSpeedForFarming = 20
-```
-
----
-
-## 🐛 Debugging
-
-If something goes wrong:
-
-1. **Press F9** to open Developer Console
-2. **Look for red errors**
-3. **Common fixes:**
-   - Reset character
-   - Rejoin game
-   - Re-execute script
-   - Check if game updated
-
-4. **Check these objects exist:**
-   - Workspace.Brainrots (or Items)
-   - Workspace.Tsunamis (or Waves)
-   - Workspace.Bases
-   - ReplicatedStorage events
-
----
-
-## 📜 Script Maintenance
-
-**Update Checklist (if game updates):**
-- [ ] Verify Brainrots folder name
-- [ ] Check Tsunami/Waves folder
-- [ ] Test remote event paths
-- [ ] Confirm Base structure
-- [ ] Test safe zone detection
-
----
-
-## 💡 Feature Requests & Issues
-
-To modify the script for new features:
-1. Open the .lua file in any text editor
-2. Find the relevant section (well-commented)
-3. Adjust values or add new logic
-4. Save and re-execute
-
----
-
-## ⚖️ Disclaimer
-
-These scripts are for educational purposes. Use at your own risk.  
-- May violate Roblox Terms of Service
-- Could result in account warnings/bans
-- Game developers may patch/detect scripts
-- Always use an alt account for testing
-
-**Be responsible and respect the game developers!**
-
----
-
-## 🏆 Credits
-
-Script created for: **Escape Tsunami For Brainrots!**  
-Game by: **Wave of Brainrots**  
-Script version: **1.0**  
-Last updated: **January 2026**
-
----
-
-**Good luck farming those Celestial Brainrots! 🌊💎**
+print("╔═══════════════════════════════════════╗")
+print("║  TSUNAMI AUTO FARM LOADED!           ║")
+print("║  ✅ GUI Menu is now visible!          ║")
+print("║  🎮 Toggle features in the menu!      ║")
+print("╚═══════════════════════════════════════╝")
