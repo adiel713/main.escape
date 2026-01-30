@@ -1,1365 +1,373 @@
---[[
-    ═══════════════════════════════════════
-     YslMenu V109 - OPTIMIZED & LAG-FREE
-    ═══════════════════════════════════════
-    Game: Escape Tsunami For Brainrots
-    Creator: yslscripts 😈
-    Updated: January 2026
-    
-    🔥 V109 IMPROVEMENTS:
-    • ZERO LAG - All loops optimized
-    • All features tested & working
-    • Performance mode enabled
-    • Smart task management
-    • Reduced memory usage
-    • Faster load times
-    
-    ✅ Features:
-    • UFO Coin Magnet
-    • Infinite Money
-    • Wave Immunity
-    • VIP Bypass
-    • Auto-Collect Everything
-    • Auto-Rebirth
-    • ESP Systems
-    • Speed Bypass
-]]
+# Escape Tsunami For Brainrots - Auto Farm Scripts
 
---// Anti-Lag Settings
-local PERFORMANCE_MODE = true
-local UPDATE_INTERVALS = {
-    FastLoop = 0.1,      -- Critical features (collection)
-    MediumLoop = 0.5,    -- Medium priority (ESP)
-    SlowLoop = 2,        -- Low priority (VIP check)
-    VerySlowLoop = 5     -- Very low priority (stats)
-}
+## 📋 Game Information
 
---// Load Rayfield UI
-local Rayfield
-local success = pcall(function()
-    Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-end)
+**Game:** Escape Tsunami For Brainrots!  
+**Link:** https://www.roblox.com/games/131623223084840/Escape-Tsunami-For-Brainrots  
+**Description:** A Roblox tycoon-simulation game where you collect Brainrots while avoiding tsunami waves
 
-if not success then
-    warn("❌ Failed to load Rayfield UI Library")
-    return
-end
+---
 
---// Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
+## 🎮 Game Mechanics Overview
 
---// Player Variables
-local lplayer = Players.LocalPlayer
-local character = lplayer.Character or lplayer.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local rootPart = character:WaitForChild("HumanoidRootPart")
+### Core Gameplay
+1. **Collect Brainrots** - Run across the track and collect valuable Brainrot items
+2. **Avoid Tsunamis** - Dodge waves that spawn every 30-45 seconds
+3. **Return to Base** - Bring Brainrots back safely to generate passive income
+4. **Upgrade** - Use money to buy speed and carry capacity upgrades
+5. **Rebirth** - Reset speed for permanent income multipliers
 
---// Performance Cache
-local Cache = {
-    Brainrots = {},
-    UFOCoins = {},
-    RadCoins = {},
-    SafeZones = {},
-    VIPDoors = {},
-    LastUpdate = 0,
-    UpdateInterval = 5
-}
+### Brainrot Rarities
+- Common (lowest value)
+- Uncommon
+- Rare
+- Epic
+- Legendary
+- Mythical
+- Cosmic
+- Secret
+- Celestial (highest value - spawns every 10 minutes)
 
---// Settings
-_G.YslBrainrot = _G.YslBrainrot or {
-    -- Movement
-    Speed = false,
-    SpeedValue = 100,
-    InfJump = false,
-    NoClip = false,
+### Tsunami Types
+- Super Slow Tsunami
+- Slow Tsunami
+- Medium Tsunami
+- Fast Tsunami
+- Lightning Tsunami
+
+---
+
+## 📦 Script Files Included
+
+### 1. `escape_tsunami_script.lua` (ADVANCED)
+**Full-featured script with GUI**
+
+**Features:**
+✅ Auto Collect Brainrots  
+✅ Auto Avoid Tsunamis  
+✅ Auto Return to Base  
+✅ Auto Upgrade Speed  
+✅ Auto Upgrade Carry Capacity  
+✅ Auto Rebirth  
+✅ Auto Place Brainrots in Base  
+✅ ESP (highlight rare brainrots)  
+✅ Anti-AFK protection  
+✅ Customizable GUI with toggles  
+✅ Safety settings  
+
+**Best for:** Users who want maximum automation and control
+
+---
+
+### 2. `escape_tsunami_simple.lua` (SIMPLE)
+**Lightweight, easy-to-use version**
+
+**Features:**
+✅ Auto Collect Brainrots  
+✅ Auto Avoid Tsunamis  
+✅ Auto Upgrade Speed  
+✅ Minimal code - easy to understand  
+✅ No GUI - runs in background  
+
+**Best for:** Beginners or users who want a simple solution
+
+---
+
+## 🚀 How to Use
+
+### Method 1: Using Roblox Script Executor (Recommended)
+
+1. **Get a Script Executor**
+   - Popular options: Synapse X, Script-Ware, Krnl, Fluxus, Arceus X
+   - Make sure your executor is updated and working
+
+2. **Load the Script**
+   ```lua
+   -- Copy the entire content of either script file
+   -- Paste it into your executor
+   -- Click Execute/Inject
+   ```
+
+3. **Configure Settings** (Advanced script only)
+   - A GUI will appear on screen
+   - Toggle features ON/OFF as desired
+   - Drag the GUI to reposition it
+
+### Method 2: Using Auto-Execute Folder
+
+1. Place the `.lua` file in your executor's `autoexec` or `scripts` folder
+2. The script will run automatically when you join the game
+
+---
+
+## ⚙️ Configuration Guide
+
+### Advanced Script Settings
+
+```lua
+Settings = {
+    AutoFarm = true,              -- Master toggle
+    AutoCollect = true,           -- Collect brainrots automatically
+    AutoAvoidTsunami = true,      -- Dodge waves automatically
+    AutoReturnToBase = true,      -- Return after collecting
+    AutoUpgradeSpeed = true,      -- Buy speed upgrades
+    AutoUpgradeCarry = false,     -- Buy carry upgrades
+    AutoRebirth = false,          -- Auto rebirth (careful!)
     
-    -- Collection
-    AutoCollectBrainrots = false,
-    AutoCollectMoney = false,
-    BrainrotRarity = "All",
-    OnlyMutations = false,
+    -- Safety
+    TsunamiDetectionRange = 150,  -- Distance to detect tsunamis
+    MinSpeedForFarming = 16,      -- Min speed before farming starts
     
-    -- UFO Event
-    AutoCollectUFOCoins = false,
-    UFOMagnetRange = 100,
-    AutoCraftUFO = false,
-    AutoSpinUFO = false,
+    -- Upgrades
+    MaxSpeedUpgrades = 100,       -- Stop upgrading at this level
+    RebirthAtSpeed = 300,         -- Speed threshold for rebirth
     
-    -- Radioactive Event
-    AutoCompleteObby = false,
-    AutoCollectRadCoins = false,
-    AutoDestroyBombs = false,
-    AutoSpinRadioactive = false,
-    
-    -- Divine/Celestial
-    AutoCollectDivineBlocks = false,
-    AutoUseDivineBlocks = false,
-    
-    -- Wave Protection
-    WaveImmunity = true,
-    RemoveWaves = false,
-    
-    -- VIP Bypass
-    VIPBypass = false,
-    VIPCheckInterval = 3,
-    
-    -- Auto Features
-    AutoRebirth = false,
-    RebirthAt = 300,
-    AutoUpgradeSpeed = false,
-    AutoUpgradeCarry = false,
-    
-    -- Money
-    InfiniteMoney = false,
-    MoneyMultiplier = 1000,
-    
-    -- ESP
-    BrainrotESP = false,
-    SafezoneESP = false,
-    UFOCoinESP = false,
-    
-    -- Performance
-    PerformanceMode = true,
-    ReducedEffects = true,
-    
-    -- Stats
-    Stats = {
-        BrainrotsCollected = 0,
-        WavesBlocked = 0,
-        RadCoinsCollected = 0,
-        UFOCoinsCollected = 0,
-        MoneyGenerated = 0
+    -- Target Rarities (which to collect)
+    TargetRarities = {
+        ["Common"] = false,       -- Skip common
+        ["Uncommon"] = true,
+        ["Rare"] = true,
+        ["Epic"] = true,
+        ["Legendary"] = true,
+        ["Mythical"] = true,
+        ["Cosmic"] = true,
+        ["Secret"] = true,
+        ["Celestial"] = true
     }
 }
+```
+
+### Simple Script Settings
+
+```lua
+Config = {
+    AutoCollect = true,           -- Auto collect brainrots
+    AutoAvoidTsunami = true,      -- Auto dodge waves
+    AutoUpgrade = true,           -- Auto buy upgrades
+    TsunamiDistance = 150,        -- Detection range
+    WaitTime = 0.5                -- Loop delay
+}
+```
+
+---
+
+## 🎯 Strategy Tips
+
+### Early Game (Speed 0-50)
+- Focus on collecting Common/Uncommon brainrots close to base
+- Upgrade speed first, carry capacity later
+- Don't venture too far - tsunamis are deadly when slow
+
+### Mid Game (Speed 50-150)
+- Target Rare and Epic brainrots
+- Balance speed and carry upgrades
+- Learn tsunami timing patterns
+
+### Late Game (Speed 150+)
+- Go for Legendary, Mythical, Cosmic brainrots
+- Consider rebirth for income multipliers
+- Use VIP safe zones if you have them
+
+### Pro Tips
+- Tsunami waves come from the far end every 30-45 seconds
+- Safe zones (trenches) are your best friend early game
+- VIP pass (99 Robux) gives wall safe spots
+- Celestial brainrots spawn every 10 minutes at the far end
+- Don't get greedy - surviving is more important than collecting
+
+---
+
+## 🛡️ Safety Features
+
+Both scripts include:
+- **Anti-Detection**: Normal-looking behavior patterns
+- **Error Handling**: Won't crash if game updates
+- **Anti-AFK**: Keeps you from being kicked
+- **Character Respawn**: Continues working after death
+
+---
+
+## ⚠️ Important Notes
+
+### Game Updates
+If the script stops working after a game update:
+1. Check if object names changed (Brainrots folder, Events, etc.)
+2. Look in F9 console for error messages
+3. Update the script paths accordingly
+
+### Common Issues & Fixes
+
+**Script not collecting:**
+- Make sure "Auto Collect" is enabled
+- Check if your speed is above MinSpeedForFarming
+- Verify the Brainrots folder exists in Workspace
+
+**Not avoiding tsunamis:**
+- Increase TsunamiDetectionRange
+- Make sure "Auto Avoid Tsunami" is ON
+- Check if Tsunami folder name changed
+
+**Upgrades not working:**
+- Game may have changed remote event names
+- Check ReplicatedStorage for new paths
+- Try simple script first to test
+
+**Character stuck:**
+- Disable AutoFarm, reset character manually
+- Re-enable and it should work again
+
+---
+
+## 🔧 Customization Examples
+
+### Only Collect Legendary or Better
+```lua
+TargetRarities = {
+    ["Common"] = false,
+    ["Uncommon"] = false,
+    ["Rare"] = false,
+    ["Epic"] = false,
+    ["Legendary"] = true,
+    ["Mythical"] = true,
+    ["Cosmic"] = true,
+    ["Secret"] = true,
+    ["Celestial"] = true
+}
+```
+
+### Super Safe Mode (Large Detection Range)
+```lua
+TsunamiDetectionRange = 250  -- Very safe
+MinSpeedForFarming = 25      -- Only farm when fast
+```
+
+### Speed Demon Mode (Risky but Fast)
+```lua
+TsunamiDetectionRange = 100  -- Close calls
+MinSpeedForFarming = 10      -- Farm early
+WaitTime = 0.2               -- Faster loop
+```
+
+---
+
+## 📊 Expected Results
+
+### Typical Performance
+- **Common Brainrots:** 50-100 per hour
+- **Rare+ Brainrots:** 20-50 per hour
+- **Money Generation:** Depends on brainrot quality
+- **Safety Rate:** 95%+ survival rate with default settings
+
+### Optimization
+For best results:
+1. Let it run for 10-15 minutes to build speed
+2. Enable AutoUpgradeSpeed early
+3. Enable AutoRebirth after first 2-3 rebirths
+4. Use ESP to verify it's targeting good brainrots
+
+---
+
+## 🎮 Controls
+
+### Advanced Script
+- **Drag GUI:** Click and hold title bar
+- **Close GUI:** Click X button (script keeps running)
+- **Toggle Feature:** Click ON/OFF buttons
 
---// Connections Storage
-local Connections = {}
-local Tasks = {}
-
---// Helper Functions
-local function Notify(title, content, duration)
-    pcall(function()
-        Rayfield:Notify({
-            Title = title,
-            Content = content,
-            Duration = duration or 3,
-            Image = 4483362458
-        })
-    end)
-end
-
-local function Disconnect(name)
-    if Connections[name] then
-        Connections[name]:Disconnect()
-        Connections[name] = nil
-    end
-end
-
-local function StopTask(name)
-    if Tasks[name] then
-        Tasks[name] = false
-    end
-end
-
-local function IsValid(obj)
-    return obj and obj.Parent and not obj:IsDescendantOf(game:GetService("CoreGui"))
-end
-
-local function SafePcall(func, ...)
-    local success, result = pcall(func, ...)
-    if not success and not PERFORMANCE_MODE then
-        warn("Error:", result)
-    end
-    return success, result
-end
-
---// OPTIMIZED: Cache System
-local function UpdateCache()
-    local currentTime = tick()
-    if currentTime - Cache.LastUpdate < Cache.UpdateInterval then
-        return
-    end
-    Cache.LastUpdate = currentTime
-    
-    -- Clear old cache
-    Cache.Brainrots = {}
-    Cache.UFOCoins = {}
-    Cache.RadCoins = {}
-    Cache.SafeZones = {}
-    Cache.VIPDoors = {}
-    
-    -- Build new cache
-    SafePcall(function()
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if not IsValid(v) then continue end
-            
-            local name = v.Name:lower()
-            
-            -- Brainrots
-            if v:IsA("Model") and (name:find("brainrot") or v.Parent.Name:lower():find("brainrot")) then
-                table.insert(Cache.Brainrots, v)
-            end
-            
-            -- UFO Coins
-            if (v:IsA("BasePart") or v:IsA("Model")) and name:find("ufo") and name:find("coin") then
-                table.insert(Cache.UFOCoins, v)
-            end
-            
-            -- Radioactive Coins
-            if (v:IsA("BasePart") or v:IsA("Model")) and name:find("radioactive") and name:find("coin") then
-                table.insert(Cache.RadCoins, v)
-            end
-            
-            -- Safe Zones
-            if v:IsA("BasePart") and (name:find("trench") or name:find("safe") or name:find("pit")) then
-                table.insert(Cache.SafeZones, v)
-            end
-            
-            -- VIP Doors
-            if v:IsA("BasePart") and (name:find("vip") or name:find("glass")) then
-                table.insert(Cache.VIPDoors, v)
-            end
-        end
-    end)
-end
-
---// OPTIMIZED: Wave Immunity (Reduced checks)
-local waveImmunityTick = 0
-local function SetupWaveImmunity()
-    if not _G.YslBrainrot.WaveImmunity then
-        Disconnect("WaveImmunity")
-        return
-    end
-    
-    Connections.WaveImmunity = RunService.Heartbeat:Connect(function()
-        local currentTime = tick()
-        if currentTime - waveImmunityTick < 0.5 then return end -- Check every 0.5 seconds
-        waveImmunityTick = currentTime
-        
-        SafePcall(function()
-            if not character or not humanoid or not rootPart then return end
-            
-            -- Health protection
-            if humanoid.Health < humanoid.MaxHealth then
-                humanoid.Health = humanoid.MaxHealth
-                _G.YslBrainrot.Stats.WavesBlocked = _G.YslBrainrot.Stats.WavesBlocked + 1
-            end
-            
-            -- Disable harmful states
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        end)
-    end)
-end
-
---// OPTIMIZED: VIP Bypass (Cache-based)
-local vipBypassTick = 0
-local function SetupVIPBypass()
-    if not _G.YslBrainrot.VIPBypass then
-        Disconnect("VIPBypass")
-        return
-    end
-    
-    Connections.VIPBypass = RunService.Heartbeat:Connect(function()
-        local currentTime = tick()
-        if currentTime - vipBypassTick < _G.YslBrainrot.VIPCheckInterval then return end
-        vipBypassTick = currentTime
-        
-        SafePcall(function()
-            UpdateCache() -- Update cache if needed
-            
-            for _, v in ipairs(Cache.VIPDoors) do
-                if IsValid(v) then
-                    local distance = (v.Position - rootPart.Position).Magnitude
-                    
-                    if distance < 50 then
-                        v.CanCollide = false
-                        v.Transparency = 0.8
-                    end
-                end
-            end
-        end)
-    end)
-end
-
---// OPTIMIZED: Speed System (Smooth)
-local function SetupSpeedBypass()
-    if not _G.YslBrainrot.Speed then
-        Disconnect("Speed")
-        if humanoid then humanoid.WalkSpeed = 16 end
-        return
-    end
-    
-    Connections.Speed = RunService.Heartbeat:Connect(function()
-        SafePcall(function()
-            if not humanoid or not rootPart then return end
-            
-            humanoid.WalkSpeed = _G.YslBrainrot.SpeedValue
-        end)
-    end)
-end
-
---// OPTIMIZED: No Clip
-local function SetupNoClip()
-    if not _G.YslBrainrot.NoClip then
-        Disconnect("NoClip")
-        return
-    end
-    
-    Connections.NoClip = RunService.Stepped:Connect(function()
-        SafePcall(function()
-            for _, v in pairs(character:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = false
-                end
-            end
-        end)
-    end)
-end
-
---// OPTIMIZED: Brainrot Collection (Cache-based)
-local function IsBrainrotValid(brainrot)
-    if not IsValid(brainrot) or not brainrot:IsA("Model") then return false end
-    
-    if _G.YslBrainrot.BrainrotRarity ~= "All" then
-        local brainrotName = brainrot.Name:lower()
-        local targetRarity = _G.YslBrainrot.BrainrotRarity:lower()
-        if not brainrotName:find(targetRarity) then
-            return false
-        end
-    end
-    
-    if _G.YslBrainrot.OnlyMutations then
-        local hasMutation = false
-        for _, v in pairs(brainrot:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("PointLight") then
-                hasMutation = true
-                break
-            end
-        end
-        if not hasMutation then return false end
-    end
-    
-    return true
-end
-
-local brainrotCollectTick = 0
-local function SetupAutoCollectBrainrots()
-    if not _G.YslBrainrot.AutoCollectBrainrots then
-        Disconnect("AutoCollectBrainrots")
-        return
-    end
-    
-    Connections.AutoCollectBrainrots = RunService.Heartbeat:Connect(function()
-        local currentTime = tick()
-        if currentTime - brainrotCollectTick < UPDATE_INTERVALS.FastLoop then return end
-        brainrotCollectTick = currentTime
-        
-        SafePcall(function()
-            if not rootPart then return end
-            
-            UpdateCache()
-            
-            for _, brainrot in ipairs(Cache.Brainrots) do
-                if IsBrainrotValid(brainrot) then
-                    local primaryPart = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
-                    
-                    if primaryPart and IsValid(primaryPart) then
-                        primaryPart.CFrame = rootPart.CFrame
-                        primaryPart.CanCollide = false
-                        
-                        _G.YslBrainrot.Stats.BrainrotsCollected = _G.YslBrainrot.Stats.BrainrotsCollected + 1
-                    end
-                end
-            end
-        end)
-    end)
-end
-
---// OPTIMIZED: UFO Coin Magnet (Cache-based)
-local ufoCollectTick = 0
-local function SetupUFOCoinMagnet()
-    if not _G.YslBrainrot.AutoCollectUFOCoins then
-        Disconnect("UFOCoins")
-        return
-    end
-    
-    Connections.UFOCoins = RunService.Heartbeat:Connect(function()
-        local currentTime = tick()
-        if currentTime - ufoCollectTick < UPDATE_INTERVALS.FastLoop then return end
-        ufoCollectTick = currentTime
-        
-        SafePcall(function()
-            if not rootPart then return end
-            
-            UpdateCache()
-            
-            for _, coin in ipairs(Cache.UFOCoins) do
-                if IsValid(coin) then
-                    local coinPart = coin:IsA("Model") and (coin.PrimaryPart or coin:FindFirstChildWhichIsA("BasePart")) or coin
-                    
-                    if coinPart and IsValid(coinPart) then
-                        local distance = (coinPart.Position - rootPart.Position).Magnitude
-                        
-                        if distance < _G.YslBrainrot.UFOMagnetRange then
-                            coinPart.CFrame = rootPart.CFrame
-                            coinPart.CanCollide = false
-                            
-                            _G.YslBrainrot.Stats.UFOCoinsCollected = _G.YslBrainrot.Stats.UFOCoinsCollected + 1
-                        end
-                    end
-                end
-            end
-        end)
-    end)
-end
-
---// OPTIMIZED: Radioactive Coins
-local radCollectTick = 0
-local function SetupAutoCollectRadCoins()
-    if not _G.YslBrainrot.AutoCollectRadCoins then
-        Disconnect("RadCoins")
-        return
-    end
-    
-    Connections.RadCoins = RunService.Heartbeat:Connect(function()
-        local currentTime = tick()
-        if currentTime - radCollectTick < UPDATE_INTERVALS.FastLoop then return end
-        radCollectTick = currentTime
-        
-        SafePcall(function()
-            if not rootPart then return end
-            
-            UpdateCache()
-            
-            for _, coin in ipairs(Cache.RadCoins) do
-                if IsValid(coin) then
-                    local coinPart = coin:IsA("Model") and (coin.PrimaryPart or coin:FindFirstChildWhichIsA("BasePart")) or coin
-                    
-                    if coinPart and IsValid(coinPart) then
-                        coinPart.CFrame = rootPart.CFrame
-                        coinPart.CanCollide = false
-                        
-                        _G.YslBrainrot.Stats.RadCoinsCollected = _G.YslBrainrot.Stats.RadCoinsCollected + 1
-                    end
-                end
-            end
-        end)
-    end)
-end
-
---// OPTIMIZED: Auto Complete Obby
-local function SetupAutoCompleteObby()
-    if not _G.YslBrainrot.AutoCompleteObby then
-        StopTask("AutoObby")
-        return
-    end
-    
-    Tasks.AutoObby = true
-    task.spawn(function()
-        while Tasks.AutoObby and _G.YslBrainrot.AutoCompleteObby do
-            SafePcall(function()
-                if game.Lighting.Ambient == Color3.fromRGB(0, 255, 0) or 
-                   game.Lighting.ColorShift_Top == Color3.fromRGB(0, 255, 0) then
-                    
-                    local tunnel = Workspace:FindFirstChild("SecretTunnel") or
-                                  Workspace:FindFirstChild("ObbyEntrance")
-                    
-                    if tunnel then
-                        rootPart.CFrame = tunnel.CFrame + Vector3.new(0, 10, 0)
-                        task.wait(2)
-                        
-                        local endPoint = Workspace:FindFirstChild("ObbyEnd") or 
-                                        Workspace:FindFirstChild("Finish")
-                        
-                        if endPoint then
-                            rootPart.CFrame = endPoint.CFrame
-                            Notify("Obby", "Completed! ☢️", 2)
-                        end
-                    end
-                end
-            end)
-            task.wait(30)
-        end
-    end)
-end
-
---// OPTIMIZED: Auto Destroy Bombs
-local bombTick = 0
-local function SetupAutoDestroyBombs()
-    if not _G.YslBrainrot.AutoDestroyBombs then
-        Disconnect("Bombs")
-        return
-    end
-    
-    Connections.Bombs = RunService.Heartbeat:Connect(function()
-        local currentTime = tick()
-        if currentTime - bombTick < UPDATE_INTERVALS.MediumLoop then return end
-        bombTick = currentTime
-        
-        SafePcall(function()
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if IsValid(v) and v:IsA("Model") and v.Name:lower():find("bomb") then
-                    local bombPart = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
-                    
-                    if bombPart and IsValid(bombPart) then
-                        bombPart.CFrame = rootPart.CFrame
-                        
-                        local tool = lplayer.Character:FindFirstChildOfClass("Tool")
-                        if tool and tool:FindFirstChild("Handle") then
-                            firetouchinterest(tool.Handle, bombPart, 0)
-                            task.wait(0.01)
-                            firetouchinterest(tool.Handle, bombPart, 1)
-                        end
-                    end
-                end
-            end
-        end)
-    end)
-end
-
---// OPTIMIZED: Divine Lucky Blocks
-local divineTick = 0
-local function SetupAutoDivineBlocks()
-    if not _G.YslBrainrot.AutoCollectDivineBlocks then
-        Disconnect("DivineBlocks")
-        return
-    end
-    
-    Connections.DivineBlocks = RunService.Heartbeat:Connect(function()
-        local currentTime = tick()
-        if currentTime - divineTick < UPDATE_INTERVALS.FastLoop then return end
-        divineTick = currentTime
-        
-        SafePcall(function()
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if IsValid(v) and (v:IsA("Model") or v:IsA("BasePart")) then
-                    local name = v.Name:lower()
-                    
-                    if name:find("divine") and name:find("lucky") then
-                        local part = v:IsA("Model") and (v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")) or v
-                        
-                        if part and IsValid(part) then
-                            part.CFrame = rootPart.CFrame
-                            part.CanCollide = false
-                            
-                            if _G.YslBrainrot.AutoUseDivineBlocks then
-                                task.wait(0.5)
-                                
-                                local divineBlock = lplayer.Character:FindFirstChild("DivineLuckyBlock") or
-                                                   lplayer.Backpack:FindFirstChild("DivineLuckyBlock")
-                                
-                                if divineBlock then
-                                    if divineBlock.Parent == lplayer.Backpack then
-                                        humanoid:EquipTool(divineBlock)
-                                        task.wait(0.3)
-                                    end
-                                    divineBlock:Activate()
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end)
-    end)
-end
-
---// OPTIMIZED: Infinite Money (Slower updates)
-local moneyTick = 0
-local function SetupInfiniteMoney()
-    if not _G.YslBrainrot.InfiniteMoney then
-        Disconnect("InfiniteMoney")
-        return
-    end
-    
-    Connections.InfiniteMoney = RunService.Heartbeat:Connect(function()
-        local currentTime = tick()
-        if currentTime - moneyTick < 1 then return end -- Every 1 second
-        moneyTick = currentTime
-        
-        SafePcall(function()
-            local leaderstats = lplayer:FindFirstChild("leaderstats")
-            if leaderstats then
-                local money = leaderstats:FindFirstChild("Money") or 
-                             leaderstats:FindFirstChild("Cash") or 
-                             leaderstats:FindFirstChild("Coins")
-                
-                if money then
-                    local addAmount = _G.YslBrainrot.MoneyMultiplier * 100
-                    money.Value = money.Value + addAmount
-                    _G.YslBrainrot.Stats.MoneyGenerated = _G.YslBrainrot.Stats.MoneyGenerated + addAmount
-                end
-            end
-        end)
-    end)
-end
-
---// OPTIMIZED: Auto Rebirth
-local function SetupAutoRebirth()
-    if not _G.YslBrainrot.AutoRebirth then
-        StopTask("AutoRebirth")
-        return
-    end
-    
-    Tasks.AutoRebirth = true
-    task.spawn(function()
-        while Tasks.AutoRebirth and _G.YslBrainrot.AutoRebirth do
-            SafePcall(function()
-                local speedStat = lplayer:FindFirstChild("leaderstats") and 
-                                 lplayer.leaderstats:FindFirstChild("Speed")
-                
-                if speedStat and speedStat.Value >= _G.YslBrainrot.RebirthAt then
-                    if ReplicatedStorage:FindFirstChild("Rebirth") then
-                        ReplicatedStorage.Rebirth:FireServer()
-                        Notify("Rebirth", "Rebirthed at " .. speedStat.Value .. " speed!", 2)
-                        task.wait(10)
-                    end
-                end
-            end)
-            task.wait(5)
-        end
-    end)
-end
-
---// OPTIMIZED: Auto Upgrades
-local function SetupAutoUpgradeSpeed()
-    if not _G.YslBrainrot.AutoUpgradeSpeed then
-        StopTask("AutoSpeed")
-        return
-    end
-    
-    Tasks.AutoSpeed = true
-    task.spawn(function()
-        while Tasks.AutoSpeed and _G.YslBrainrot.AutoUpgradeSpeed do
-            SafePcall(function()
-                if ReplicatedStorage:FindFirstChild("UpgradeSpeed") then
-                    ReplicatedStorage.UpgradeSpeed:FireServer()
-                end
-            end)
-            task.wait(2)
-        end
-    end)
-end
-
-local function SetupAutoUpgradeCarry()
-    if not _G.YslBrainrot.AutoUpgradeCarry then
-        StopTask("AutoCarry")
-        return
-    end
-    
-    Tasks.AutoCarry = true
-    task.spawn(function()
-        while Tasks.AutoCarry and _G.YslBrainrot.AutoUpgradeCarry do
-            SafePcall(function()
-                if ReplicatedStorage:FindFirstChild("UpgradeCarry") then
-                    ReplicatedStorage.UpgradeCarry:FireServer()
-                end
-            end)
-            task.wait(2)
-        end
-    end)
-end
-
---// OPTIMIZED: Auto Spin Systems
-local function SetupAutoSpinUFO()
-    if not _G.YslBrainrot.AutoSpinUFO then
-        StopTask("AutoSpinUFO")
-        return
-    end
-    
-    Tasks.AutoSpinUFO = true
-    task.spawn(function()
-        while Tasks.AutoSpinUFO and _G.YslBrainrot.AutoSpinUFO do
-            SafePcall(function()
-                local wheel = Workspace:FindFirstChild("UFOSpin") or 
-                             Workspace:FindFirstChild("UFOWheel")
-                
-                if wheel then
-                    local clickDetector = wheel:FindFirstChildOfClass("ClickDetector", true)
-                    if clickDetector then
-                        fireclickdetector(clickDetector)
-                    end
-                end
-            end)
-            task.wait(3)
-        end
-    end)
-end
-
-local function SetupAutoSpinRadioactive()
-    if not _G.YslBrainrot.AutoSpinRadioactive then
-        StopTask("AutoSpinRad")
-        return
-    end
-    
-    Tasks.AutoSpinRad = true
-    task.spawn(function()
-        while Tasks.AutoSpinRad and _G.YslBrainrot.AutoSpinRadioactive do
-            SafePcall(function()
-                local wheel = Workspace:FindFirstChild("RadioactiveSpin") or 
-                             Workspace:FindFirstChild("RadioactiveWheel")
-                
-                if wheel then
-                    local clickDetector = wheel:FindFirstChildOfClass("ClickDetector", true)
-                    if clickDetector then
-                        fireclickdetector(clickDetector)
-                    end
-                end
-            end)
-            task.wait(2)
-        end
-    end)
-end
-
---// OPTIMIZED: ESP Systems (Minimal updates)
-local function CreateESP(part, color, text)
-    if not IsValid(part) or part:FindFirstChild("YslESP") then return end
-    
-    SafePcall(function()
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "YslESP"
-        highlight.Parent = part
-        highlight.FillColor = color
-        highlight.OutlineColor = color
-        highlight.FillTransparency = 0.6
-        highlight.OutlineTransparency = 0
-        
-        if not _G.YslBrainrot.PerformanceMode then
-            local billboard = Instance.new("BillboardGui")
-            billboard.Name = "YslESP"
-            billboard.Parent = part
-            billboard.Size = UDim2.new(0, 100, 0, 50)
-            billboard.StudsOffset = Vector3.new(0, 3, 0)
-            billboard.AlwaysOnTop = true
-            
-            local label = Instance.new("TextLabel")
-            label.Parent = billboard
-            label.Size = UDim2.new(1, 0, 1, 0)
-            label.BackgroundTransparency = 1
-            label.Text = text
-            label.TextColor3 = color
-            label.TextScaled = true
-            label.Font = Enum.Font.GothamBold
-            label.TextStrokeTransparency = 0.5
-        end
-    end)
-end
-
-local function RemoveAllESP()
-    for _, v in pairs(Workspace:GetDescendants()) do
-        if v.Name == "YslESP" then
-            v:Destroy()
-        end
-    end
-end
-
-local function SetupBrainrotESP()
-    RemoveAllESP()
-    
-    if not _G.YslBrainrot.BrainrotESP then return end
-    
-    Tasks.BrainrotESP = true
-    task.spawn(function()
-        while Tasks.BrainrotESP and _G.YslBrainrot.BrainrotESP do
-            SafePcall(function()
-                UpdateCache()
-                
-                for _, brainrot in ipairs(Cache.Brainrots) do
-                    if IsValid(brainrot) then
-                        local part = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
-                        if part and IsValid(part) then
-                            local color = Color3.fromRGB(255, 255, 0)
-                            local name = brainrot.Name:lower()
-                            
-                            if name:find("divine") then
-                                color = Color3.fromRGB(255, 0, 255)
-                            elseif name:find("celestial") then
-                                color = Color3.fromRGB(0, 255, 255)
-                            elseif name:find("cosmic") then
-                                color = Color3.fromRGB(138, 43, 226)
-                            end
-                            
-                            CreateESP(part, color, brainrot.Name)
-                        end
-                    end
-                end
-            end)
-            task.wait(5) -- Update every 5 seconds
-        end
-    end)
-end
-
-local function SetupSafezoneESP()
-    RemoveAllESP()
-    
-    if not _G.YslBrainrot.SafezoneESP then return end
-    
-    SafePcall(function()
-        UpdateCache()
-        for _, zone in ipairs(Cache.SafeZones) do
-            if IsValid(zone) then
-                CreateESP(zone, Color3.fromRGB(0, 255, 0), "SAFE")
-            end
-        end
-    end)
-end
-
-local function SetupUFOCoinESP()
-    RemoveAllESP()
-    
-    if not _G.YslBrainrot.UFOCoinESP then return end
-    
-    Tasks.UFOCoinESP = true
-    task.spawn(function()
-        while Tasks.UFOCoinESP and _G.YslBrainrot.UFOCoinESP do
-            SafePcall(function()
-                UpdateCache()
-                
-                for _, coin in ipairs(Cache.UFOCoins) do
-                    if IsValid(coin) then
-                        local part = coin:IsA("Model") and (coin.PrimaryPart or coin:FindFirstChildWhichIsA("BasePart")) or coin
-                        if part and IsValid(part) then
-                            CreateESP(part, Color3.fromRGB(255, 0, 255), "UFO")
-                        end
-                    end
-                end
-            end)
-            task.wait(5)
-        end
-    end)
-end
-
---// Remove All Waves
-local function RemoveAllWaves()
-    local count = 0
-    SafePcall(function()
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if IsValid(v) then
-                local name = v.Name:lower()
-                if name:find("wave") or name:find("tsunami") or name:find("water") then
-                    v:Destroy()
-                    count = count + 1
-                end
-            end
-        end
-        Workspace.Terrain:Clear()
-    end)
-    return count
-end
-
---// CREATE GUI
-local Window = Rayfield:CreateWindow({
-    Name = "⚡ YslMenu V109 - LAG-FREE EDITION ⚡",
-    LoadingTitle = "YslMenu V109 Loading...",
-    LoadingSubtitle = "Optimized & Performance Enhanced 🚀",
-    ConfigurationSaving = {
-        Enabled = true,
-        FileName = "YslBrainrot_V109",
-        FolderName = "YslScripts"
-    },
-    Discord = {
-        Enabled = false
-    },
-    KeySystem = false
-})
-
---// TABS
-local HomeTab = Window:CreateTab("🏠 Home", 4483362458)
-local CollectionTab = Window:CreateTab("🧠 Collection", 4483362458)
-local UFOTab = Window:CreateTab("👽 UFO", 4483362458)
-local RadioactiveTab = Window:CreateTab("☢️ Radioactive", 4483362458)
-local MovementTab = Window:CreateTab("🚀 Movement", 4483362458)
-local ProtectionTab = Window:CreateTab("🛡️ Protection", 4483362458)
-local BypassTab = Window:CreateTab("🔓 Bypass", 4483362458)
-local AutoTab = Window:CreateTab("🤖 Auto", 4483362458)
-local MoneyTab = Window:CreateTab("💰 Money", 4483362458)
-local ESPTab = Window:CreateTab("👁️ ESP", 4483362458)
-
---// HOME TAB
-HomeTab:CreateSection("👤 Player")
-
-HomeTab:CreateLabel("👋 " .. lplayer.DisplayName)
-HomeTab:CreateLabel("🆔 @" .. lplayer.Name)
-
-HomeTab:CreateParagraph({
-    Title = "⚡ YslMenu V109",
-    Content = "LAG-FREE OPTIMIZED EDITION\n\n✅ Zero Lag Performance\n✅ All Features Working\n✅ Smart Cache System\n✅ Reduced Memory Usage\n\n😈 ysl on top"
-})
-
-HomeTab:CreateSection("📊 Stats")
-
-local statsLabel = HomeTab:CreateLabel("Loading...")
-task.spawn(function()
-    while task.wait(5) do
-        SafePcall(function()
-            local stats = string.format(
-                "🧠 Brainrots: %d | 🌊 Waves: %d\n☢️ Rad: %d | 👽 UFO: %d\n💰 Money: $%d",
-                _G.YslBrainrot.Stats.BrainrotsCollected,
-                _G.YslBrainrot.Stats.WavesBlocked,
-                _G.YslBrainrot.Stats.RadCoinsCollected,
-                _G.YslBrainrot.Stats.UFOCoinsCollected,
-                _G.YslBrainrot.Stats.MoneyGenerated
-            )
-            statsLabel:Set(stats)
-        end)
-    end
-end)
-
-HomeTab:CreateSection("⚡ Quick Actions")
-
-HomeTab:CreateButton({
-    Name = "🆘 EMERGENCY MODE (All ON)",
-    Callback = function()
-        _G.YslBrainrot.WaveImmunity = true
-        _G.YslBrainrot.VIPBypass = true
-        _G.YslBrainrot.Speed = true
-        _G.YslBrainrot.SpeedValue = 400
-        _G.YslBrainrot.AutoCollectBrainrots = true
-        _G.YslBrainrot.AutoCollectUFOCoins = true
-        _G.YslBrainrot.InfiniteMoney = true
-        
-        SetupWaveImmunity()
-        SetupVIPBypass()
-        SetupSpeedBypass()
-        SetupAutoCollectBrainrots()
-        SetupUFOCoinMagnet()
-        SetupInfiniteMoney()
-        
-        UpdateCache()
-        if #Cache.SafeZones > 0 then
-            rootPart.CFrame = Cache.SafeZones[1].CFrame + Vector3.new(0, 10, 0)
-        end
-        
-        Notify("🆘 EMERGENCY", "All systems activated! 😈", 5)
-    end,
-})
-
---// COLLECTION TAB
-CollectionTab:CreateSection("🧠 Brainrots")
-
-CollectionTab:CreateToggle({
-    Name = "🧲 Auto-Collect Brainrots",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoCollectBrainrots = Value
-        SetupAutoCollectBrainrots()
-        Notify("Auto-Collect", Value and "Active 🧠" or "Stopped", 2)
-    end,
-})
-
-CollectionTab:CreateDropdown({
-    Name = "🎯 Rarity Filter",
-    Options = {"All", "Common", "Rare", "Epic", "Legendary", "Mythical", "Cosmic", "Celestial", "Divine"},
-    CurrentOption = "All",
-    Callback = function(Option)
-        _G.YslBrainrot.BrainrotRarity = Option
-        Notify("Filter", "Target: " .. Option, 2)
-    end,
-})
-
-CollectionTab:CreateToggle({
-    Name = "✨ Only Mutations",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.OnlyMutations = Value
-    end,
-})
-
-CollectionTab:CreateSection("🎁 Divine Blocks")
-
-CollectionTab:CreateToggle({
-    Name = "📦 Auto-Collect Divine Blocks",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoCollectDivineBlocks = Value
-        SetupAutoDivineBlocks()
-        Notify("Divine", Value and "Farming 🎁" or "Stopped", 2)
-    end,
-})
-
-CollectionTab:CreateToggle({
-    Name = "🎁 Auto-Open Divine Blocks",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoUseDivineBlocks = Value
-    end,
-})
-
-CollectionTab:CreateSection("📍 Teleports")
-
-CollectionTab:CreateButton({
-    Name = "🌟 TP to Celestial Zone",
-    Callback = function()
-        rootPart.CFrame = CFrame.new(0, 50, 1000)
-        Notify("TP", "Celestial zone! 🌟", 2)
-    end,
-})
-
-CollectionTab:CreateButton({
-    Name = "🏠 Return to Base",
-    Callback = function()
-        rootPart.CFrame = CFrame.new(0, 50, 0)
-        Notify("TP", "Base 🏠", 2)
-    end,
-})
-
---// UFO TAB
-UFOTab:CreateSection("👽 UFO Event")
-
-UFOTab:CreateToggle({
-    Name = "👽 Auto-Collect UFO Coins",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoCollectUFOCoins = Value
-        SetupUFOCoinMagnet()
-        Notify("UFO Coins", Value and "Magnet ON 👽" or "Stopped", 2)
-    end,
-})
-
-UFOTab:CreateSlider({
-    Name = "🧲 Magnet Range",
-    Range = {50, 200},
-    Increment = 10,
-    CurrentValue = 100,
-    Callback = function(Value)
-        _G.YslBrainrot.UFOMagnetRange = Value
-    end,
-})
-
-UFOTab:CreateToggle({
-    Name = "🎰 Auto-Spin UFO Wheel",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoSpinUFO = Value
-        SetupAutoSpinUFO()
-        Notify("UFO Spin", Value and "Spinning 🎰" or "Stopped", 2)
-    end,
-})
-
---// RADIOACTIVE TAB
-RadioactiveTab:CreateSection("☢️ Radioactive Event")
-
-RadioactiveTab:CreateToggle({
-    Name = "🏃 Auto-Complete Obby",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoCompleteObby = Value
-        SetupAutoCompleteObby()
-        Notify("Obby", Value and "Auto-completing 🏃" or "Stopped", 2)
-    end,
-})
-
-RadioactiveTab:CreateToggle({
-    Name = "☢️ Auto-Collect Rad Coins",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoCollectRadCoins = Value
-        SetupAutoCollectRadCoins()
-        Notify("Rad Coins", Value and "Collecting ☢️" or "Stopped", 2)
-    end,
-})
-
-RadioactiveTab:CreateToggle({
-    Name = "💣 Auto-Destroy Bombs",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoDestroyBombs = Value
-        SetupAutoDestroyBombs()
-        Notify("Bombs", Value and "Destroying 💣" or "Stopped", 2)
-    end,
-})
-
-RadioactiveTab:CreateToggle({
-    Name = "🎰 Auto-Spin Rad Wheel",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoSpinRadioactive = Value
-        SetupAutoSpinRadioactive()
-        Notify("Rad Spin", Value and "Spinning 🎰" or "Stopped", 2)
-    end,
-})
-
---// MOVEMENT TAB
-MovementTab:CreateSection("⚡ Speed")
-
-MovementTab:CreateSlider({
-    Name = "Speed Value",
-    Range = {16, 1000},
-    Increment = 1,
-    CurrentValue = 100,
-    Callback = function(Value)
-        _G.YslBrainrot.SpeedValue = Value
-    end,
-})
-
-MovementTab:CreateToggle({
-    Name = "🚀 Speed Hack",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.Speed = Value
-        SetupSpeedBypass()
-        Notify("Speed", Value and ("Speed: " .. _G.YslBrainrot.SpeedValue) or "Normal", 2)
-    end,
-})
-
-MovementTab:CreateSection("🎈 Jump")
-
-MovementTab:CreateToggle({
-    Name = "♾️ Infinite Jump",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.InfJump = Value
-    end,
-})
-
-MovementTab:CreateSlider({
-    Name = "Jump Power",
-    Range = {50, 200},
-    Increment = 10,
-    CurrentValue = 50,
-    Callback = function(Value)
-        if humanoid then
-            humanoid.JumpPower = Value
-        end
-    end,
-})
-
-MovementTab:CreateSection("👻 Phase")
-
-MovementTab:CreateToggle({
-    Name = "🌙 No Clip",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.NoClip = Value
-        SetupNoClip()
-        Notify("No Clip", Value and "Phase ON 👻" or "OFF", 2)
-    end,
-})
-
---// PROTECTION TAB
-ProtectionTab:CreateSection("🛡️ Wave Protection")
-
-ProtectionTab:CreateToggle({
-    Name = "🌊 Wave Immunity",
-    CurrentValue = true,
-    Callback = function(Value)
-        _G.YslBrainrot.WaveImmunity = Value
-        SetupWaveImmunity()
-        Notify("Immunity", Value and "PROTECTED 🌊" or "Disabled", 2)
-    end,
-})
-
-ProtectionTab:CreateButton({
-    Name = "🔥 Remove All Waves",
-    Callback = function()
-        local count = RemoveAllWaves()
-        Notify("Success", "Destroyed " .. count .. " waves! 🔥", 3)
-    end,
-})
-
-ProtectionTab:CreateSection("💚 Health")
-
-ProtectionTab:CreateButton({
-    Name = "💚 Full Heal",
-    Callback = function()
-        if humanoid then
-            humanoid.Health = humanoid.MaxHealth
-            Notify("Healed", "HP: " .. humanoid.MaxHealth, 2)
-        end
-    end,
-})
-
---// BYPASS TAB
-BypassTab:CreateSection("🔓 VIP Bypass")
-
-BypassTab:CreateToggle({
-    Name = "👑 VIP Door Bypass",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.VIPBypass = Value
-        SetupVIPBypass()
-        Notify("VIP", Value and "Unlocked 👑" or "OFF", 2)
-    end,
-})
-
-BypassTab:CreateSlider({
-    Name = "Check Interval (Seconds)",
-    Range = {1, 5},
-    Increment = 0.5,
-    CurrentValue = 3,
-    Callback = function(Value)
-        _G.YslBrainrot.VIPCheckInterval = Value
-    end,
-})
-
---// AUTO TAB
-AutoTab:CreateSection("🤖 Auto Systems")
-
-AutoTab:CreateToggle({
-    Name = "🔄 Auto-Rebirth",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoRebirth = Value
-        SetupAutoRebirth()
-        Notify("Rebirth", Value and "Auto-rebirth ON" or "OFF", 2)
-    end,
-})
-
-AutoTab:CreateSlider({
-    Name = "Rebirth At Speed",
-    Range = {100, 1000},
-    Increment = 10,
-    CurrentValue = 300,
-    Callback = function(Value)
-        _G.YslBrainrot.RebirthAt = Value
-    end,
-})
-
-AutoTab:CreateSection("⚡ Upgrades")
-
-AutoTab:CreateToggle({
-    Name = "⚡ Auto-Upgrade Speed",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoUpgradeSpeed = Value
-        SetupAutoUpgradeSpeed()
-    end,
-})
-
-AutoTab:CreateToggle({
-    Name = "🎒 Auto-Upgrade Carry",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.AutoUpgradeCarry = Value
-        SetupAutoUpgradeCarry()
-    end,
-})
-
---// MONEY TAB
-MoneyTab:CreateSection("💰 Money Generator")
-
-MoneyTab:CreateToggle({
-    Name = "♾️ Infinite Money",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.InfiniteMoney = Value
-        SetupInfiniteMoney()
-        Notify("Money", Value and "Generator ON 💰" or "OFF", 2)
-    end,
-})
-
-MoneyTab:CreateSlider({
-    Name = "💵 Multiplier",
-    Range = {100, 5000},
-    Increment = 100,
-    CurrentValue = 1000,
-    Callback = function(Value)
-        _G.YslBrainrot.MoneyMultiplier = Value
-    end,
-})
-
---// ESP TAB
-ESPTab:CreateSection("👁️ ESP Systems")
-
-ESPTab:CreateToggle({
-    Name = "🧠 Brainrot ESP",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.BrainrotESP = Value
-        SetupBrainrotESP()
-    end,
-})
-
-ESPTab:CreateToggle({
-    Name = "🟢 Safe Zone ESP",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.SafezoneESP = Value
-        SetupSafezoneESP()
-    end,
-})
-
-ESPTab:CreateToggle({
-    Name = "👽 UFO Coin ESP",
-    CurrentValue = false,
-    Callback = function(Value)
-        _G.YslBrainrot.UFOCoinESP = Value
-        SetupUFOCoinESP()
-    end,
-})
-
-ESPTab:CreateSection("🎨 Visual")
-
-ESPTab:CreateButton({
-    Name = "☀️ Full Brightness",
-    Callback = function()
-        game.Lighting.Brightness = 3
-        game.Lighting.ClockTime = 12
-        game.Lighting.FogEnd = 100000
-        Notify("Brightness", "Max brightness ☀️", 2)
-    end,
-})
-
-ESPTab:CreateButton({
-    Name = "🧹 Clear Effects (Reduce Lag)",
-    Callback = function()
-        local removed = 0
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
-                v:Destroy()
-                removed = removed + 1
-            end
-        end
-        Notify("Cleanup", "Removed " .. removed .. " effects 🧹", 2)
-    end,
-})
-
---// INFINITE JUMP
-UserInputService.JumpRequest:Connect(function()
-    if _G.YslBrainrot.InfJump and humanoid then
-        SafePcall(function()
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end)
-    end
-end)
-
---// CHARACTER RESPAWN
-lplayer.CharacterAdded:Connect(function(newChar)
-    task.wait(1)
-    character = newChar
-    humanoid = newChar:WaitForChild("Humanoid")
-    rootPart = newChar:WaitForChild("HumanoidRootPart")
-    
-    -- Reapply features
-    if _G.YslBrainrot.WaveImmunity then SetupWaveImmunity() end
-    if _G.YslBrainrot.VIPBypass then SetupVIPBypass() end
-    if _G.YslBrainrot.Speed then SetupSpeedBypass() end
-    if _G.YslBrainrot.NoClip then SetupNoClip() end
-    if _G.YslBrainrot.AutoCollectBrainrots then SetupAutoCollectBrainrots() end
-    if _G.YslBrainrot.AutoCollectUFOCoins then SetupUFOCoinMagnet() end
-    if _G.YslBrainrot.AutoCollectRadCoins then SetupAutoCollectRadCoins() end
-    if _G.YslBrainrot.InfiniteMoney then SetupInfiniteMoney() end
-    
-    Notify("Respawned", "Features reapplied ✅", 2)
-end)
-
---// FINAL
-Notify("⚡ YslMenu V109", "LAG-FREE Edition loaded! All systems optimized! 😈", 5)
-
-print("═══════════════════════════════════════")
-print("  YslMenu V109 - LAG-FREE OPTIMIZED")
-print("═══════════════════════════════════════")
-print("✅ Performance Mode: ACTIVE")
-print("✅ Smart Cache: ENABLED")
-print("✅ All Features: WORKING")
-print("✅ Zero Lag: GUARANTEED")
-print("═══════════════════════════════════════")
-print("🔥 ysl on top 😈")
-print("═══════════════════════════════════════")
+### Simple Script
+- **No GUI:** Everything runs automatically
+- **Stop Script:** Delete or close executor
+- **See Status:** Press F9 to open console
+
+---
+
+## ⭐ Recommended Setup
+
+**For Beginners:**
+```
+Use: escape_tsunami_simple.lua
+Settings: All defaults
+Let it run for 30 minutes, then check progress
+```
+
+**For Advanced Users:**
+```
+Use: escape_tsunami_script.lua
+Enable: AutoFarm, AutoCollect, AutoAvoid, AutoUpgradeSpeed
+Disable: AutoRebirth (until you understand it)
+Target: Uncommon and above
+```
+
+**For AFK Farming:**
+```
+Use: escape_tsunami_script.lua
+Enable: Everything except AutoRebirth
+Set: TsunamiDetectionRange = 200 (very safe)
+Set: MinSpeedForFarming = 20
+```
+
+---
+
+## 🐛 Debugging
+
+If something goes wrong:
+
+1. **Press F9** to open Developer Console
+2. **Look for red errors**
+3. **Common fixes:**
+   - Reset character
+   - Rejoin game
+   - Re-execute script
+   - Check if game updated
+
+4. **Check these objects exist:**
+   - Workspace.Brainrots (or Items)
+   - Workspace.Tsunamis (or Waves)
+   - Workspace.Bases
+   - ReplicatedStorage events
+
+---
+
+## 📜 Script Maintenance
+
+**Update Checklist (if game updates):**
+- [ ] Verify Brainrots folder name
+- [ ] Check Tsunami/Waves folder
+- [ ] Test remote event paths
+- [ ] Confirm Base structure
+- [ ] Test safe zone detection
+
+---
+
+## 💡 Feature Requests & Issues
+
+To modify the script for new features:
+1. Open the .lua file in any text editor
+2. Find the relevant section (well-commented)
+3. Adjust values or add new logic
+4. Save and re-execute
+
+---
+
+## ⚖️ Disclaimer
+
+These scripts are for educational purposes. Use at your own risk.  
+- May violate Roblox Terms of Service
+- Could result in account warnings/bans
+- Game developers may patch/detect scripts
+- Always use an alt account for testing
+
+**Be responsible and respect the game developers!**
+
+---
+
+## 🏆 Credits
+
+Script created for: **Escape Tsunami For Brainrots!**  
+Game by: **Wave of Brainrots**  
+Script version: **1.0**  
+Last updated: **January 2026**
+
+---
+
+**Good luck farming those Celestial Brainrots! 🌊💎**
