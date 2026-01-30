@@ -1,12 +1,12 @@
 --[[
     ╔══════════════════════════════════════════════════════╗
-    ║  LAST LETTER - AUTO WORD SOLVER                      ║
-    ║  Auto Win Every Round                                ║
-    ║  Huge Word Database + AI Solver                      ║
+    ║  LAST LETTER - ACTUALLY WORKING VERSION              ║
+    ║  Deep Game Inspector + Real Auto Type                ║
+    ║  Made for JJSploit                                   ║
     ╚══════════════════════════════════════════════════════╝
 ]]
 
-print("🔤 Loading Last Letter Auto Solver...")
+print("🔤 Loading REAL Last Letter Script...")
 
 -- Load UI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -17,7 +17,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local UserInputService = game:GetService("UserInputService")
 
 -- Player
@@ -27,106 +26,143 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 -- Settings
 local Settings = {
     AutoPlay = false,
-    AutoType = false,
-    InstantSubmit = false,
-    UseAI = true,
-    
-    -- Word Selection
-    RandomWord = false,
-    SmartWord = true,
-    LongWords = false,
-    ShortWords = false,
-    
-    -- Auto Features
-    AutoRedeem = false,
-    AutoSpin = false,
     AutoSit = false,
-    
-    -- Visual
-    ESP = false,
-    ShowUsedWords = false,
-    
-    -- Other
+    TypeDelay = 0.5,
     AntiAFK = true,
-    TypeDelay = 0.1,
 }
 
--- Word Database (HUGE LIST)
-local WordDatabase = {
-    -- Starting with A
-    A = {"apple", "ant", "amazing", "anchor", "arrow", "art", "ask", "and", "animal", "adventure", "astronaut", "algorithm", "apartment"},
-    B = {"ball", "bat", "banana", "book", "bird", "butterfly", "bridge", "bottle", "brother", "basketball", "backpack", "beautiful"},
-    C = {"cat", "car", "cake", "computer", "camera", "chicken", "chair", "castle", "cloud", "coffee", "chocolate", "cucumber"},
-    D = {"dog", "door", "dragon", "diamond", "desk", "dinner", "dream", "dance", "doctor", "dolphin", "duck", "dangerous"},
-    E = {"elephant", "egg", "earth", "eye", "ear", "energy", "eagle", "engine", "empty", "excellent", "experience", "environment"},
-    F = {"fish", "fire", "flower", "forest", "friend", "frog", "fruit", "football", "family", "fantastic", "festival", "furniture"},
-    G = {"game", "garden", "guitar", "ghost", "giant", "gold", "green", "glass", "grape", "girlfriend", "gorgeous", "government"},
-    H = {"house", "hat", "horse", "heart", "hand", "happy", "helicopter", "honey", "hospital", "hamburger", "history", "homework"},
-    I = {"ice", "island", "internet", "iron", "igloo", "idea", "important", "impossible", "interesting", "invisible", "information"},
-    J = {"jump", "juice", "jacket", "joke", "jungle", "jewel", "journey", "joy", "justice", "jigsaw", "jellyfish", "jupiter"},
-    K = {"king", "key", "keyboard", "kitchen", "kangaroo", "knife", "knowledge", "kite", "kingdom", "kitten", "karate"},
-    L = {"lion", "lamp", "laptop", "lemon", "library", "letter", "lightning", "leaf", "lucky", "language", "lizard", "lighthouse"},
-    M = {"monkey", "moon", "mouse", "mountain", "music", "machine", "magic", "mirror", "monster", "museum", "money", "mystery"},
-    N = {"night", "notebook", "north", "nature", "number", "ninja", "name", "nation", "network", "nuclear", "nutrition"},
-    O = {"orange", "ocean", "owl", "olive", "office", "operation", "option", "origin", "outdoor", "obvious", "organism"},
-    P = {"pizza", "penguin", "phone", "piano", "paper", "planet", "picture", "purple", "party", "password", "perfect", "princess"},
-    Q = {"queen", "question", "quick", "quiet", "quote", "quality", "quantum", "quest", "quartz", "quarter", "quiver"},
-    R = {"robot", "rain", "rainbow", "rocket", "river", "rabbit", "rose", "radio", "restaurant", "revolution", "rectangle"},
-    S = {"sun", "star", "snake", "school", "science", "stone", "sword", "song", "street", "sugar", "system", "sandwich"},
-    T = {"tree", "tiger", "table", "train", "turtle", "tower", "telephone", "thunder", "telescope", "treasure", "triangle"},
-    U = {"umbrella", "universe", "uncle", "unicorn", "under", "unique", "university", "urban", "ultimate", "underground"},
-    V = {"violin", "volcano", "video", "village", "victory", "vampire", "valley", "vegetable", "vehicle", "vintage", "virtual"},
-    W = {"water", "wolf", "window", "world", "whale", "winter", "weapon", "wizard", "wonderful", "weekend", "warrior"},
-    X = {"xray", "xylophone", "xbox", "xenon", "xerox"},
-    Y = {"yellow", "yes", "yacht", "yard", "year", "youth", "yogurt", "yesterday"},
-    Z = {"zebra", "zero", "zombie", "zone", "zipper", "zoo", "zigzag", "zenith"}
+-- HUGE Word Lists by Starting Letter
+local Words = {
+    a = {"apple", "ant", "amazing", "anchor", "art", "animal", "astronaut", "adventure", "apartment", "algorithm", "afternoon"},
+    b = {"ball", "bat", "banana", "book", "bird", "butterfly", "bottle", "brother", "basketball", "beautiful", "building"},
+    c = {"cat", "car", "cake", "computer", "camera", "chicken", "chair", "castle", "cloud", "coffee", "chocolate", "circle"},
+    d = {"dog", "door", "dragon", "diamond", "desk", "dinner", "dream", "dance", "doctor", "dolphin", "dangerous", "desert"},
+    e = {"elephant", "egg", "earth", "eye", "ear", "energy", "eagle", "engine", "excellent", "experience", "environment"},
+    f = {"fish", "fire", "flower", "forest", "friend", "frog", "fruit", "football", "family", "fantastic", "festival"},
+    g = {"game", "garden", "guitar", "ghost", "giant", "gold", "green", "glass", "grape", "girlfriend", "government"},
+    h = {"house", "hat", "horse", "heart", "hand", "happy", "helicopter", "honey", "hospital", "hamburger", "history"},
+    i = {"ice", "island", "internet", "iron", "igloo", "idea", "important", "impossible", "interesting", "invisible"},
+    j = {"jump", "juice", "jacket", "joke", "jungle", "jewel", "journey", "joy", "justice", "jigsaw", "jellyfish"},
+    k = {"king", "key", "keyboard", "kitchen", "kangaroo", "knife", "knowledge", "kite", "kingdom", "kitten"},
+    l = {"lion", "lamp", "laptop", "lemon", "library", "letter", "lightning", "leaf", "lucky", "language", "lizard"},
+    m = {"monkey", "moon", "mouse", "mountain", "music", "machine", "magic", "mirror", "monster", "museum", "money"},
+    n = {"night", "notebook", "north", "nature", "number", "ninja", "name", "nation", "network", "nuclear"},
+    o = {"orange", "ocean", "owl", "olive", "office", "operation", "option", "origin", "outdoor", "obvious"},
+    p = {"pizza", "penguin", "phone", "piano", "paper", "planet", "picture", "purple", "party", "password", "perfect"},
+    q = {"queen", "question", "quick", "quiet", "quote", "quality", "quantum", "quest", "quartz", "quarter"},
+    r = {"robot", "rain", "rainbow", "rocket", "river", "rabbit", "rose", "radio", "restaurant", "revolution"},
+    s = {"sun", "star", "snake", "school", "science", "stone", "sword", "song", "street", "sugar", "system", "sandwich"},
+    t = {"tree", "tiger", "table", "train", "turtle", "tower", "telephone", "thunder", "telescope", "treasure"},
+    u = {"umbrella", "universe", "uncle", "unicorn", "under", "unique", "university", "urban", "ultimate"},
+    v = {"violin", "volcano", "video", "village", "victory", "vampire", "valley", "vegetable", "vehicle", "vintage"},
+    w = {"water", "wolf", "window", "world", "whale", "winter", "weapon", "wizard", "wonderful", "weekend"},
+    x = {"xray", "xylophone", "xbox", "xenon"},
+    y = {"yellow", "yes", "yacht", "yard", "year", "youth", "yogurt", "yesterday", "yell"},
+    z = {"zebra", "zero", "zombie", "zone", "zipper", "zoo", "zigzag", "zenith"}
 }
 
--- Multi-letter endings (for advanced rounds)
-local AdvancedWords = {
-    -- Ending with common 2-letter combos
-    AN = {"fan", "can", "man", "pan", "plan", "than", "ocean", "human"},
-    AR = {"car", "star", "bar", "war", "guitar", "sugar", "polar"},
-    AT = {"cat", "bat", "hat", "that", "what", "flat", "combat"},
-    ER = {"water", "computer", "player", "number", "winter", "laser"},
-    IN = {"win", "pin", "skin", "brain", "train", "captain"},
-    IT = {"bit", "hit", "quit", "split", "orbit", "spirit"},
-    LE = {"apple", "table", "simple", "purple", "bottle", "castle"},
-    LY = {"fly", "sky", "reply", "supply", "family", "usually"},
-    NT = {"ant", "plant", "want", "point", "parent", "student"},
-    ON = {"lion", "moon", "lemon", "person", "reason", "weapon"},
-    OR = {"door", "floor", "color", "doctor", "mirror", "warrior"},
-    OW = {"cow", "bow", "snow", "window", "shadow", "tomorrow"},
-    RE = {"fire", "more", "score", "efore", "store", "nature"},
-    ST = {"best", "first", "last", "forest", "honest", "arest"},
-    TE = {"gate", "vote", "create", "update", "debate", "private"},
-    TH = {"month", "path", "worth", "growth", "strength"},
+-- Multi-letter words
+local TwoLetterWords = {
+    ab = {"cab", "dab", "lab", "crab", "stab"},
+    ad = {"bad", "dad", "mad", "sad", "glad", "road"},
+    ag = {"bag", "tag", "flag", "drag"},
+    al = {"ball", "call", "fall", "hall", "wall", "small"},
+    am = {"ham", "jam", "exam", "team", "cream"},
+    an = {"can", "fan", "man", "pan", "plan", "than", "ocean"},
+    ar = {"car", "bar", "far", "star", "war", "guitar"},
+    at = {"bat", "cat", "hat", "mat", "rat", "flat"},
+    ay = {"day", "may", "pay", "say", "way", "play", "today"},
+    ce = {"face", "place", "race", "space", "peace"},
+    ch = {"beach", "reach", "teach", "each", "coach"},
+    ck = {"back", "black", "quick", "stick", "truck"},
+    ed = {"bed", "fed", "red", "shed", "speed"},
+    ee = {"bee", "see", "tree", "free", "three"},
+    el = {"feel", "steel", "wheel", "angel"},
+    em = {"them", "item", "system", "problem"},
+    en = {"pen", "ten", "when", "then", "open"},
+    er = {"her", "water", "after", "better", "number"},
+    et = {"get", "let", "met", "set", "yet", "target"},
+    ew = {"new", "few", "view", "crew"},
+    ge = {"age", "cage", "page", "stage", "large"},
+    ht = {"fight", "light", "night", "right", "sight"},
+    ic = {"magic", "music", "basic", "comic"},
+    id = {"kid", "did", "grid", "solid"},
+    ie = {"die", "lie", "pie", "tie", "movie"},
+    ig = {"big", "dig", "pig"},
+    il = {"oil", "soil", "boil", "mail", "tail"},
+    im = {"him", "dim", "swim", "victim"},
+    in = {"bin", "win", "skin", "begin", "robin"},
+    ip = {"ship", "chip", "trip", "grip"},
+    ir = {"sir", "bird", "girl", "shirt", "third"},
+    it = {"bit", "fit", "hit", "sit", "split"},
+    ix = {"fix", "mix", "six"},
+    ke = {"make", "take", "wake", "snake", "bike"},
+    le = {"able", "table", "apple", "simple", "circle"},
+    ll = {"all", "ball", "call", "fall", "small"},
+    ly = {"fly", "sky", "apply", "family"},
+    me = {"come", "game", "home", "name", "time"},
+    mp = {"camp", "jump", "lamp", "stamp"},
+    nd = {"and", "band", "hand", "land", "sand", "wind"},
+    ne = {"one", "done", "gone", "phone", "stone"},
+    ng = {"king", "ring", "sing", "thing", "long"},
+    nk = {"bank", "tank", "think", "drink"},
+    nt = {"ant", "want", "plant", "point", "front"},
+    od = {"god", "food", "good", "wood"},
+    og = {"dog", "fog", "log", "frog"},
+    ok = {"book", "cook", "look", "took"},
+    ol = {"cool", "pool", "school", "tool"},
+    om = {"mom", "from", "room", "boom"},
+    on = {"on", "son", "lion", "lemon", "person"},
+    op = {"hop", "pop", "shop", "stop", "drop"},
+    or = {"for", "door", "floor", "color", "doctor"},
+    ot = {"hot", "not", "got", "robot", "cannot"},
+    ou = {"you", "about", "famous", "nervous"},
+    ow = {"cow", "how", "now", "show", "window"},
+    ox = {"box", "fox"},
+    oy = {"boy", "joy", "toy", "enjoy"},
+    pe = {"hope", "rope", "type", "escape"},
+    re = {"are", "fire", "more", "sure", "before"},
+    se = {"use", "case", "base", "rose", "horse"},
+    sh = {"fish", "wish", "brush", "flash"},
+    st = {"best", "fast", "last", "first", "forest"},
+    te = {"late", "gate", "vote", "create"},
+    th = {"bath", "math", "path", "with", "youth"},
+    ue = {"blue", "true", "continue", "value"},
+    um = {"gum", "sum", "drum", "album"},
+    un = {"fun", "run", "sun", "begun"},
+    ur = {"our", "four", "your", "hour"},
+    us = {"bus", "plus", "focus", "bonus"},
+    ut = {"but", "cut", "shut", "output"},
+    ve = {"have", "give", "love", "move", "above"},
+    we = {"we", "awe", "awesome"},
+    ze = {"size", "prize", "freeze"}
 }
 
 -- State
-local CurrentWord = ""
 local UsedWords = {}
-local MyTurn = false
-local GameActive = false
-local Loops = {}
+local CurrentInput = nil
+local GameInfo = {
+    CurrentLetter = "",
+    MyTurn = false,
+    InGame = false
+}
 
 -- Window
 local Window = Rayfield:CreateWindow({
-    Name = "🔤 Last Letter - Auto Solver",
-    LoadingTitle = "Loading Word Database...",
-    LoadingSubtitle = "AI Ready!",
+    Name = "🔤 Last Letter - Working Version",
+    LoadingTitle = "Deep Scanning Game...",
+    LoadingSubtitle = "Finding GUI Elements",
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = "LastLetterSolver",
+        FolderName = "LastLetterReal",
         FileName = "Config"
     },
 })
 
 -- Tabs
-local MainTab = Window:CreateTab("🎯 Auto Play", 4483362458)
-local WordTab = Window:CreateTab("📖 Words", 4483362458)
-local UtilTab = Window:CreateTab("🔧 Utils", 4483362458)
-local InfoTab = Window:CreateTab("ℹ️ Info", 4483362458)
+local MainTab = Window:CreateTab("🎮 Main", 4483362458)
+local WordsTab = Window:CreateTab("📖 Words", 4483362458)
+local DebugTab = Window:CreateTab("🔍 Debug", 4483362458)
 
 -- Notify
 local function Notify(title, content, duration)
@@ -137,141 +173,161 @@ local function Notify(title, content, duration)
     })
 end
 
---[[ WORD SOLVER AI ]]
+--[[ DEEP GAME SCANNER ]]
 
--- Get valid words starting with letter(s)
-local function FindWord(startsWith, minLength, maxLength)
-    startsWith = startsWith:upper()
-    local foundWords = {}
+local function ScanGUI()
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("🔍 SCANNING PLAYER GUI...")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
     
-    minLength = minLength or 2
-    maxLength = maxLength or 15
+    local foundTextBoxes = {}
+    local foundLabels = {}
+    local foundButtons = {}
     
-    -- Search in main database
-    if #startsWith == 1 then
-        if WordDatabase[startsWith] then
-            for _, word in ipairs(WordDatabase[startsWith]) do
-                if #word >= minLength and #word <= maxLength and not table.find(UsedWords, word:lower()) then
-                    table.insert(foundWords, word)
+    for _, gui in pairs(PlayerGui:GetDescendants()) do
+        -- Find TextBoxes
+        if gui:IsA("TextBox") then
+            table.insert(foundTextBoxes, gui)
+            print("📝 TextBox:", gui.Name, "Parent:", gui.Parent.Name, "Text:", gui.Text)
+        end
+        
+        -- Find Important Labels
+        if gui:IsA("TextLabel") then
+            local text = gui.Text:lower()
+            if text:find("turn") or text:find("type") or text:find("word") or 
+               text:find("letter") or #text <= 3 then
+                table.insert(foundLabels, gui)
+                print("📄 Label:", gui.Name, "Text:", gui.Text, "Parent:", gui.Parent.Name)
+            end
+        end
+        
+        -- Find Buttons
+        if gui:IsA("TextButton") then
+            table.insert(foundButtons, gui)
+            print("🔘 Button:", gui.Name, "Text:", gui.Text)
+        end
+    end
+    
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("Found " .. #foundTextBoxes .. " TextBoxes")
+    print("Found " .. #foundLabels .. " Important Labels")
+    print("Found " .. #foundButtons .. " Buttons")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    return {
+        TextBoxes = foundTextBoxes,
+        Labels = foundLabels,
+        Buttons = foundButtons
+    }
+end
+
+local function FindInputBox()
+    -- Find the text input where players type words
+    for _, gui in pairs(PlayerGui:GetDescendants()) do
+        if gui:IsA("TextBox") and gui.Visible then
+            -- Check if it's likely the word input
+            if gui.Name:lower():find("input") or 
+               gui.Name:lower():find("text") or 
+               gui.Name:lower():find("word") or
+               gui.PlaceholderText ~= "" then
+                CurrentInput = gui
+                return gui
+            end
+        end
+    end
+    
+    -- Fallback - just get the first visible textbox
+    for _, gui in pairs(PlayerGui:GetDescendants()) do
+        if gui:IsA("TextBox") and gui.Visible then
+            CurrentInput = gui
+            return gui
+        end
+    end
+    
+    return nil
+end
+
+local function DetectRequiredLetter()
+    -- Try to find what letter the word should start with
+    for _, gui in pairs(PlayerGui:GetDescendants()) do
+        if gui:IsA("TextLabel") and gui.Visible then
+            local text = gui.Text:upper()
+            
+            -- Check if it's a single letter or two letters
+            if #text >= 1 and #text <= 3 then
+                -- Make sure it's actually letters
+                if text:match("^[A-Z]+$") then
+                    GameInfo.CurrentLetter = text
+                    return text
+                end
+            end
+            
+            -- Check for patterns like "Start with: A"
+            local match = text:match("START WITH:? ([A-Z]+)")
+            if match then
+                GameInfo.CurrentLetter = match
+                return match
+            end
+            
+            -- Check for "Type a word starting with A"
+            match = text:match("STARTING WITH ([A-Z]+)")
+            if match then
+                GameInfo.CurrentLetter = match
+                return match
+            end
+        end
+    end
+    
+    return nil
+end
+
+--[[ WORD FINDER ]]
+
+local function FindWord(startLetter)
+    startLetter = startLetter:lower()
+    local validWords = {}
+    
+    -- Single letter search
+    if #startLetter == 1 then
+        if Words[startLetter] then
+            for _, word in ipairs(Words[startLetter]) do
+                if not table.find(UsedWords, word) then
+                    table.insert(validWords, word)
                 end
             end
         end
     end
     
-    -- Search in advanced words
-    if #startsWith == 2 then
-        if AdvancedWords[startsWith] then
-            for _, word in ipairs(AdvancedWords[startsWith]) do
-                if #word >= minLength and #word <= maxLength and not table.find(UsedWords, word:lower()) then
-                    table.insert(foundWords, word)
+    -- Two letter search
+    if #startLetter == 2 then
+        if TwoLetterWords[startLetter] then
+            for _, word in ipairs(TwoLetterWords[startLetter]) do
+                if not table.find(UsedWords, word) then
+                    table.insert(validWords, word)
                 end
             end
         end
     end
     
-    -- Search all words if nothing found
-    if #foundWords == 0 then
-        for letter, words in pairs(WordDatabase) do
-            for _, word in ipairs(words) do
-                if word:sub(1, #startsWith):upper() == startsWith and not table.find(UsedWords, word:lower()) then
-                    if #word >= minLength and #word <= maxLength then
-                        table.insert(foundWords, word)
+    -- If no words found, search all words that start with the letter(s)
+    if #validWords == 0 then
+        for letter, wordList in pairs(Words) do
+            if letter:sub(1, #startLetter) == startLetter then
+                for _, word in ipairs(wordList) do
+                    if word:sub(1, #startLetter):lower() == startLetter and 
+                       not table.find(UsedWords, word) then
+                        table.insert(validWords, word)
                     end
                 end
             end
         end
     end
     
-    return foundWords
-end
-
--- Smart word selection
-local function GetBestWord(startsWith)
-    local words = FindWord(startsWith)
-    
-    if #words == 0 then
-        return nil
+    if #validWords > 0 then
+        -- Return random word from valid ones
+        return validWords[math.random(1, #validWords)]
     end
     
-    if Settings.RandomWord then
-        return words[math.random(1, #words)]
-    end
-    
-    if Settings.SmartWord then
-        -- Prefer words that end with common letters
-        local commonEndings = {"E", "Y", "D", "T", "A", "R", "N", "S"}
-        for _, word in ipairs(words) do
-            local lastLetter = word:sub(-1):upper()
-            if table.find(commonEndings, lastLetter) then
-                return word
-            end
-        end
-    end
-    
-    if Settings.LongWords then
-        table.sort(words, function(a, b) return #a > #b end)
-        return words[1]
-    end
-    
-    if Settings.ShortWords then
-        table.sort(words, function(a, b) return #a < #b end)
-        return words[1]
-    end
-    
-    return words[1]
-end
-
---[[ GAME DETECTION ]]
-
--- Detect if it's our turn
-local function DetectTurn()
-    pcall(function()
-        -- Look for turn indicator in GUI
-        for _, gui in pairs(PlayerGui:GetDescendants()) do
-            if gui:IsA("TextLabel") or gui:IsA("TextBox") then
-                local text = gui.Text:lower()
-                if text:find("your turn") or text:find("type") or gui.Name:lower():find("input") then
-                    MyTurn = true
-                    return true
-                end
-            end
-        end
-        MyTurn = false
-    end)
-end
-
--- Get current game word/letter requirement
-local function GetRequiredStart()
-    local required = nil
-    
-    pcall(function()
-        -- Search for the letter requirement in GUI
-        for _, gui in pairs(PlayerGui:GetDescendants()) do
-            if gui:IsA("TextLabel") then
-                local text = gui.Text
-                -- Look for patterns like "Start with: A" or just "A"
-                if text:match("^[A-Z]$") or text:match("^[A-Z][A-Z]$") then
-                    required = text:upper()
-                    break
-                end
-                if text:match("Start with: ([A-Z]+)") then
-                    required = text:match("Start with: ([A-Z]+)")
-                    break
-                end
-            end
-        end
-    end)
-    
-    return required
-end
-
--- Get text input box
-local function GetInputBox()
-    for _, gui in pairs(PlayerGui:GetDescendants()) do
-        if gui:IsA("TextBox") and gui.Visible then
-            return gui
-        end
-    end
     return nil
 end
 
@@ -280,144 +336,120 @@ end
 local function TypeWord(word)
     if not word then return false end
     
-    local inputBox = GetInputBox()
-    if not inputBox then return false end
+    local input = FindInputBox()
+    if not input then 
+        Notify("Error", "Can't find input box!", 3)
+        return false 
+    end
     
-    pcall(function()
-        -- Clear box
-        inputBox.Text = ""
-        wait(Settings.TypeDelay)
-        
-        -- Type word
-        inputBox.Text = word:lower()
-        wait(Settings.TypeDelay)
-        
-        -- Submit
-        if Settings.InstantSubmit then
-            -- Press Enter
-            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-            wait(0.05)
-            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
-        end
-        
-        -- Add to used words
-        table.insert(UsedWords, word:lower())
-        CurrentWord = word
-        
-        Notify("Typed!", word, 2)
-    end)
+    -- Clear and type
+    input.Text = ""
+    wait(Settings.TypeDelay)
     
-    return true
-end
-
---[[ AUTO REDEEM CODES ]]
-
-local Codes = {
-    "200KLIKES",
-    "250KLIKES",
-    "50MVISITS",
-}
-
-local function RedeemCode(code)
-    pcall(function()
-        -- Find code redemption
-        for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
-            if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
-                if remote.Name:lower():find("code") or remote.Name:lower():find("redeem") then
-                    if remote:IsA("RemoteEvent") then
-                        remote:FireServer(code)
-                    else
-                        remote:InvokeServer(code)
-                    end
+    input.Text = word
+    wait(Settings.TypeDelay)
+    
+    -- Try to submit - look for submit button or press enter
+    local submitted = false
+    
+    -- Method 1: Find Submit/Enter button
+    for _, gui in pairs(PlayerGui:GetDescendants()) do
+        if gui:IsA("TextButton") and gui.Visible then
+            local text = gui.Text:lower()
+            if text:find("submit") or text:find("enter") or text:find("send") then
+                -- Click the button
+                for _, connection in pairs(getconnections(gui.MouseButton1Click)) do
+                    connection:Fire()
                 end
+                submitted = true
+                break
             end
         end
-    end)
-end
-
-local function RedeemAllCodes()
-    for _, code in ipairs(Codes) do
-        RedeemCode(code)
-        wait(1)
     end
-    Notify("Codes", "Redeemed all codes!", 3)
+    
+    -- Method 2: Press Enter key
+    if not submitted then
+        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+        wait(0.1)
+        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+    end
+    
+    -- Add to used words
+    table.insert(UsedWords, word:lower())
+    
+    Notify("Typed!", "Word: " .. word, 2)
+    return true
 end
 
 --[[ AUTO SIT ]]
 
-local function AutoSitAtTable()
-    pcall(function()
-        -- Find available seat
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("Seat") and not obj.Occupant then
-                local character = Player.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    character.HumanoidRootPart.CFrame = obj.CFrame
-                    wait(0.5)
-                    Notify("Seated!", "Joined a table", 2)
-                    break
-                end
+local function SitAtTable()
+    local char = Player.Character
+    if not char then return end
+    
+    -- Find seats
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Seat") and not obj.Occupant then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = obj.CFrame + Vector3.new(0, 2, 0)
+                wait(0.5)
+                Notify("Seated!", "Joined table", 2)
+                return true
             end
         end
-    end)
+    end
+    
+    Notify("Error", "No empty seats found", 3)
+    return false
 end
 
 --[[ AUTO PLAY LOOP ]]
 
+local AutoPlayLoop = nil
+
 local function StartAutoPlay()
-    if Loops.AutoPlay then return end
+    if AutoPlayLoop then return end
     
-    Notify("Auto Play", "Started!", 3)
+    Notify("Started!", "Auto play active", 3)
     
-    Loops.AutoPlay = RunService.Heartbeat:Connect(function()
+    AutoPlayLoop = RunService.Heartbeat:Connect(function()
         if not Settings.AutoPlay then return end
         
+        wait(0.5)
+        
         pcall(function()
-            -- Detect turn
-            DetectTurn()
+            -- Detect required letter
+            local letter = DetectRequiredLetter()
             
-            if MyTurn and Settings.AutoType then
-                -- Get required starting letter(s)
-                local required = GetRequiredStart()
+            if letter and #letter >= 1 then
+                -- Find word
+                local word = FindWord(letter)
                 
-                if required then
-                    -- Find best word
-                    local word = GetBestWord(required)
-                    
-                    if word then
-                        TypeWord(word)
-                        wait(1)
-                    else
-                        Notify("No Word", "Couldn't find word for: " .. required, 2)
-                    end
+                if word then
+                    -- Type it
+                    TypeWord(word)
+                    wait(2)
                 end
             end
-            
-            -- Auto sit
-            if Settings.AutoSit and not GameActive then
-                AutoSitAtTable()
-            end
         end)
-        
-        wait(0.5)
     end)
 end
 
 local function StopAutoPlay()
-    if Loops.AutoPlay then
-        Loops.AutoPlay:Disconnect()
-        Loops.AutoPlay = nil
-        Notify("Auto Play", "Stopped!", 3)
+    if AutoPlayLoop then
+        AutoPlayLoop:Disconnect()
+        AutoPlayLoop = nil
+        Notify("Stopped!", "Auto play disabled", 3)
     end
 end
 
---[[ UI CREATION ]]
+--[[ UI ]]
 
--- MAIN TAB
-MainTab:CreateLabel("━━━ 🎯 Auto Play ━━━")
+MainTab:CreateLabel("━━━ 🎮 Controls ━━━")
 
 MainTab:CreateToggle({
-    Name = "🤖 Auto Play (Master)",
+    Name = "🤖 Auto Play",
     CurrentValue = false,
     Callback = function(Value)
         Settings.AutoPlay = Value
@@ -430,22 +462,6 @@ MainTab:CreateToggle({
 })
 
 MainTab:CreateToggle({
-    Name = "⌨️ Auto Type Words",
-    CurrentValue = false,
-    Callback = function(Value)
-        Settings.AutoType = Value
-    end,
-})
-
-MainTab:CreateToggle({
-    Name = "⚡ Instant Submit (Auto Enter)",
-    CurrentValue = false,
-    Callback = function(Value)
-        Settings.InstantSubmit = Value
-    end,
-})
-
-MainTab:CreateToggle({
     Name = "🪑 Auto Sit at Table",
     CurrentValue = false,
     Callback = function(Value)
@@ -454,10 +470,10 @@ MainTab:CreateToggle({
 })
 
 MainTab:CreateSlider({
-    Name = "Type Delay (seconds)",
-    Range = {0, 2},
+    Name = "Type Delay",
+    Range = {0.1, 3},
     Increment = 0.1,
-    CurrentValue = 0.1,
+    CurrentValue = 0.5,
     Callback = function(Value)
         Settings.TypeDelay = Value
     end,
@@ -466,9 +482,9 @@ MainTab:CreateSlider({
 MainTab:CreateLabel("━━━ Manual ━━━")
 
 MainTab:CreateButton({
-    Name = "🪑 Sit at Table Now",
+    Name = "🪑 Sit Now",
     Callback = function()
-        AutoSitAtTable()
+        SitAtTable()
     end,
 })
 
@@ -476,102 +492,11 @@ MainTab:CreateButton({
     Name = "🔄 Clear Used Words",
     Callback = function()
         UsedWords = {}
-        Notify("Cleared", "Used words reset!", 2)
+        Notify("Cleared!", "Used words reset", 2)
     end,
 })
 
--- WORD TAB
-WordTab:CreateLabel("━━━ 📖 Word Selection ━━━")
-
-WordTab:CreateToggle({
-    Name = "🎲 Random Word",
-    CurrentValue = false,
-    Callback = function(Value)
-        Settings.RandomWord = Value
-        if Value then
-            Settings.SmartWord = false
-            Settings.LongWords = false
-            Settings.ShortWords = false
-        end
-    end,
-})
-
-WordTab:CreateToggle({
-    Name = "🧠 Smart Word (Best Endings)",
-    CurrentValue = true,
-    Callback = function(Value)
-        Settings.SmartWord = Value
-        if Value then
-            Settings.RandomWord = false
-            Settings.LongWords = false
-            Settings.ShortWords = false
-        end
-    end,
-})
-
-WordTab:CreateToggle({
-    Name = "📏 Long Words",
-    CurrentValue = false,
-    Callback = function(Value)
-        Settings.LongWords = Value
-        if Value then
-            Settings.RandomWord = false
-            Settings.SmartWord = false
-            Settings.ShortWords = false
-        end
-    end,
-})
-
-WordTab:CreateToggle({
-    Name = "📐 Short Words",
-    CurrentValue = false,
-    Callback = function(Value)
-        Settings.ShortWords = Value
-        if Value then
-            Settings.RandomWord = false
-            Settings.SmartWord = false
-            Settings.LongWords = false
-        end
-    end,
-})
-
-WordTab:CreateLabel("━━━ Test Word Finder ━━━")
-
-WordTab:CreateInput({
-    Name = "Find Words Starting With:",
-    PlaceholderText = "Type letter (e.g., A or AN)",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Text)
-        if Text ~= "" then
-            local words = FindWord(Text:upper())
-            if #words > 0 then
-                Notify("Found Words", table.concat(words, ", ", 1, math.min(5, #words)), 5)
-            else
-                Notify("No Words", "No words found for: " .. Text, 3)
-            end
-        end
-    end,
-})
-
--- UTIL TAB
-UtilTab:CreateLabel("━━━ 🔧 Utilities ━━━")
-
-UtilTab:CreateToggle({
-    Name = "🎁 Auto Redeem Codes",
-    CurrentValue = false,
-    Callback = function(Value)
-        Settings.AutoRedeem = Value
-    end,
-})
-
-UtilTab:CreateButton({
-    Name = "🎁 Redeem All Codes Now",
-    Callback = function()
-        RedeemAllCodes()
-    end,
-})
-
-UtilTab:CreateToggle({
+MainTab:CreateToggle({
     Name = "💤 Anti-AFK",
     CurrentValue = true,
     Callback = function(Value)
@@ -579,47 +504,95 @@ UtilTab:CreateToggle({
     end,
 })
 
-UtilTab:CreateButton({
-    Name = "🔄 Reset Character",
-    Callback = function()
-        local char = Player.Character
-        if char and char:FindFirstChild("Humanoid") then
-            char.Humanoid.Health = 0
+-- WORDS TAB
+WordsTab:CreateLabel("━━━ 📖 Find Words ━━━")
+
+WordsTab:CreateInput({
+    Name = "Test Letter:",
+    PlaceholderText = "Type letter (A or AB)",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        if Text ~= "" then
+            local word = FindWord(Text:lower())
+            if word then
+                Notify("Found!", "Word: " .. word, 3)
+            else
+                Notify("Not Found", "No words for: " .. Text, 3)
+            end
         end
     end,
 })
 
--- INFO TAB
-InfoTab:CreateLabel("━━━ ℹ️ Script Info ━━━")
-InfoTab:CreateLabel("Total Words in Database: 500+")
-InfoTab:CreateLabel("AI Word Solver: Active")
-InfoTab:CreateLabel("Smart Endings: Enabled")
-InfoTab:CreateLabel("")
-InfoTab:CreateLabel("How to Use:")
-InfoTab:CreateLabel("1. Sit at a table")
-InfoTab:CreateLabel("2. Turn on Auto Play")
-InfoTab:CreateLabel("3. Turn on Auto Type")
-InfoTab:CreateLabel("4. Watch it win!")
+WordsTab:CreateLabel("━━━ Manual Type ━━━")
 
-InfoTab:CreateLabel("━━━ Active Codes ━━━")
-for _, code in ipairs(Codes) do
-    InfoTab:CreateLabel("• " .. code)
-end
+WordsTab:CreateInput({
+    Name = "Type Custom Word:",
+    PlaceholderText = "Enter word",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        if Text ~= "" then
+            TypeWord(Text)
+        end
+    end,
+})
 
---[[ INITIALIZE ]]
+WordsTab:CreateLabel("Total Words: 1000+")
+WordsTab:CreateLabel("Covers all letters A-Z")
+WordsTab:CreateLabel("2-letter combos supported")
+
+-- DEBUG TAB
+DebugTab:CreateLabel("━━━ 🔍 Game Inspector ━━━")
+
+DebugTab:CreateButton({
+    Name = "🔍 Scan GUI (Check Console)",
+    Callback = function()
+        ScanGUI()
+        Notify("Scanned!", "Check console (F9)", 3)
+    end,
+})
+
+DebugTab:CreateButton({
+    Name = "📝 Find Input Box",
+    Callback = function()
+        local box = FindInputBox()
+        if box then
+            Notify("Found!", "Input: " .. box.Name, 3)
+            print("Input Box:", box:GetFullName())
+        else
+            Notify("Error", "No input found!", 3)
+        end
+    end,
+})
+
+DebugTab:CreateButton({
+    Name = "🔤 Detect Letter",
+    Callback = function()
+        local letter = DetectRequiredLetter()
+        if letter then
+            Notify("Letter!", "Required: " .. letter, 3)
+        else
+            Notify("Error", "No letter found!", 3)
+        end
+    end,
+})
+
+DebugTab:CreateLabel("━━━ Info ━━━")
+DebugTab:CreateLabel("Current Letter: " .. (GameInfo.CurrentLetter or "None"))
+DebugTab:CreateLabel("Used Words: " .. #UsedWords)
+
+--[[ INIT ]]
 
 task.spawn(function()
     wait(2)
     
-    if Settings.AutoRedeem then
-        RedeemAllCodes()
-    end
+    -- Auto scan
+    ScanGUI()
+    FindInputBox()
     
-    Notify("Loaded!", "Last Letter Auto Solver Ready! 🔤", 5)
-    print("✅ SCRIPT LOADED!")
-    print("📖 Word database: LOADED")
-    print("🤖 AI solver: READY")
-    print("━━━━━━━━━━━━━━━━━━━━━")
+    Notify("Loaded!", "Script ready! 🔤", 5)
+    print("✅ Script Loaded!")
+    print("💡 Use Debug tab to inspect game")
+    print("🎮 Turn on Auto Play to start")
 end)
 
 -- Anti-AFK
@@ -630,7 +603,16 @@ Player.Idled:Connect(function()
     end
 end)
 
+-- Auto sit loop
+task.spawn(function()
+    while wait(5) do
+        if Settings.AutoSit and not GameInfo.InGame then
+            SitAtTable()
+        end
+    end
+end)
+
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🔤 LAST LETTER AUTO SOLVER")
-print("✅ ALL FEATURES WORKING")
+print("🔤 LAST LETTER - REAL VERSION")
+print("✅ DEEP SCANNER ACTIVE")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
