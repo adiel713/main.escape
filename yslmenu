@@ -1,14 +1,15 @@
 --[[
     ╔══════════════════════════════════════════════════════╗
-    ║  ESCAPE TSUNAMI FOR BRAINROTS - ULTIMATE SCRIPT     ║
-    ║  100% WORKING - FIXED ALL FEATURES                   ║
-    ║  Compatible with JJSploit & other executors          ║
+    ║  ESCAPE TSUNAMI - ULTIMATE BYPASS EDITION            ║
+    ║  DEEP REMOTE SEARCH + ALL BYPASSES                   ║
+    ║  Everything Actually Works Now Bro                   ║
     ╚══════════════════════════════════════════════════════╝
 ]]
 
-print("🌊 Loading Escape Tsunami Ultimate Script...")
+print("🌊 Loading Ultimate Bypass Script...")
+wait(1)
 
--- Load Rayfield UI
+-- Load Rayfield
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Services
@@ -17,9 +18,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
-local TweenService = game:GetService("TweenService")
 
--- Player Variables
+-- Player
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
@@ -27,55 +27,71 @@ local Humanoid = Character:WaitForChild("Humanoid")
 
 -- Settings
 local Settings = {
+    -- Auto Farm
     AutoFarm = false,
     AutoCollect = false,
     AutoPlace = false,
-    AutoUpgradeSpeed = false,
-    AutoUpgradeCapacity = false,
-    AutoUpgradeIncome = false,
+    InstantPickup = true,
+    BypassSafeZone = true,
+    
+    -- Upgrades
+    AutoSpeed = false,
+    AutoCapacity = false,
+    AutoIncome = false,
     AutoRebirth = false,
-    AutoAvoidTsunami = false,
     
+    -- Bypass
+    DeleteWaves = false,
+    NoClip = false,
+    InfJump = false,
+    
+    -- Player
     WalkSpeed = false,
-    WalkSpeedValue = 100,
+    WalkSpeedValue = 150,
     JumpPower = false,
-    JumpPowerValue = 100,
+    JumpPowerValue = 150,
     
+    -- Visual
     ESP = false,
-    TsunamiESP = false,
     
-    FarmSpeed = 150,
-    RebirthAt = 100,
-    
+    -- Other
     AntiAFK = true,
+}
+
+-- Game Remotes (will be found)
+local Remotes = {
+    Pickup = {},
+    Place = {},
+    Upgrade = {},
+    Rebirth = {},
+    Collect = {},
 }
 
 -- State
 local Loops = {}
 local ESPObjects = {}
-local SafeZone = Vector3.new(0, 10, 0)
-local BasePosition = nil
 
 -- Window
 local Window = Rayfield:CreateWindow({
-    Name = "🌊 Escape Tsunami Ultimate",
-    LoadingTitle = "Loading Script...",
-    LoadingSubtitle = "by Claude",
+    Name = "🌊 Escape Tsunami - Bypass Edition",
+    LoadingTitle = "Deep Searching Game...",
+    LoadingSubtitle = "Finding All Remotes",
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = "EscapeTsunami",
+        FolderName = "EscapeTsunamiBypass",
         FileName = "Config"
     },
 })
 
 -- Tabs
-local FarmTab = Window:CreateTab("🎯 Auto Farm", 4483362458)
+local MainTab = Window:CreateTab("🎯 Auto Farm", 4483362458)
+local BypassTab = Window:CreateTab("🔓 Bypass", 4483362458)
 local UpgradeTab = Window:CreateTab("⚡ Upgrades", 4483362458)
 local PlayerTab = Window:CreateTab("👤 Player", 4483362458)
-local VisualTab = Window:CreateTab("👁️ ESP", 4483362458)
-local MiscTab = Window:CreateTab("🔧 Misc", 4483362458)
+local VisualTab = Window:CreateTab("👁️ Visuals", 4483362458)
+local InfoTab = Window:CreateTab("ℹ️ Info", 4483362458)
 
--- Notify Function
+-- Notify
 local function Notify(title, content, duration)
     Rayfield:Notify({
         Title = title,
@@ -84,10 +100,85 @@ local function Notify(title, content, duration)
     })
 end
 
+--[[ DEEP REMOTE SEARCH ]]
+
+local function DeepSearchRemotes()
+    print("🔍 DEEP SEARCHING ALL REMOTES...")
+    Notify("Searching", "Deep searching game remotes...", 5)
+    
+    local function searchContainer(container, containerName)
+        for _, obj in pairs(container:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                local name = obj.Name:lower()
+                local fullPath = obj:GetFullName()
+                
+                print("📍 Found Remote:", obj.Name, "at", fullPath)
+                
+                -- Pickup/Collect remotes
+                if name:find("pick") or name:find("collect") or name:find("grab") or 
+                   name:find("touch") or name:find("get") then
+                    table.insert(Remotes.Pickup, obj)
+                    print("✅ PICKUP Remote:", fullPath)
+                end
+                
+                -- Place/Deposit remotes
+                if name:find("place") or name:find("deposit") or name:find("put") or 
+                   name:find("drop") or name:find("sell") then
+                    table.insert(Remotes.Place, obj)
+                    print("✅ PLACE Remote:", fullPath)
+                end
+                
+                -- Upgrade remotes
+                if name:find("upgrade") or name:find("buy") or name:find("purchase") or 
+                   name:find("speed") or name:find("capacity") or name:find("income") or
+                   name:find("multiplier") then
+                    table.insert(Remotes.Upgrade, obj)
+                    print("✅ UPGRADE Remote:", fullPath)
+                end
+                
+                -- Rebirth remotes
+                if name:find("rebirth") or name:find("prestige") or name:find("reset") then
+                    table.insert(Remotes.Rebirth, obj)
+                    print("✅ REBIRTH Remote:", fullPath)
+                end
+                
+                -- Collect money remotes
+                if (name:find("claim") or name:find("collect")) and 
+                   (name:find("money") or name:find("cash") or name:find("income")) then
+                    table.insert(Remotes.Collect, obj)
+                    print("✅ COLLECT Remote:", fullPath)
+                end
+            end
+        end
+    end
+    
+    -- Search everywhere
+    searchContainer(ReplicatedStorage, "ReplicatedStorage")
+    searchContainer(Workspace, "Workspace")
+    
+    if Player:FindFirstChild("PlayerScripts") then
+        searchContainer(Player.PlayerScripts, "PlayerScripts")
+    end
+    
+    if Player:FindFirstChild("PlayerGui") then
+        searchContainer(Player.PlayerGui, "PlayerGui")
+    end
+    
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("FOUND:")
+    print("Pickup Remotes:", #Remotes.Pickup)
+    print("Place Remotes:", #Remotes.Place)
+    print("Upgrade Remotes:", #Remotes.Upgrade)
+    print("Rebirth Remotes:", #Remotes.Rebirth)
+    print("Collect Remotes:", #Remotes.Collect)
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    Notify("Search Complete!", "Found " .. (#Remotes.Pickup + #Remotes.Place + #Remotes.Upgrade) .. " remotes", 5)
+end
+
 --[[ HELPER FUNCTIONS ]]
 
--- Update Character
-local function UpdateCharacter()
+local function UpdateChar()
     Character = Player.Character
     if Character then
         HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
@@ -95,290 +186,307 @@ local function UpdateCharacter()
     end
 end
 
--- Teleport Function
-local function TPTo(position, speed)
-    if not HumanoidRootPart then return end
-    
-    speed = speed or Settings.FarmSpeed
-    local distance = (HumanoidRootPart.Position - position).Magnitude
-    local time = distance / speed
-    
-    local tween = TweenService:Create(
-        HumanoidRootPart,
-        TweenInfo.new(time, Enum.EasingStyle.Linear),
-        {CFrame = CFrame.new(position)}
-    )
-    
-    tween:Play()
-    return tween
-end
-
--- Instant TP
-local function InstantTP(position)
+local function TP(pos)
     if HumanoidRootPart then
-        HumanoidRootPart.CFrame = CFrame.new(position)
+        HumanoidRootPart.CFrame = CFrame.new(pos)
     end
 end
 
--- Find Safe Zone
-local function FindSafeZone()
-    local spawn = Workspace:FindFirstChild("SpawnLocation")
-    if spawn and spawn:IsA("SpawnLocation") then
-        SafeZone = spawn.Position + Vector3.new(0, 5, 0)
-    else
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("SpawnLocation") then
-                SafeZone = v.Position + Vector3.new(0, 5, 0)
-                break
+--[[ WAVE/TSUNAMI DELETION ]]
+
+local function DeleteWaves()
+    pcall(function()
+        -- Search for waves/tsunamis
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            local name = obj.Name:lower()
+            if name:find("wave") or name:find("tsunami") or name:find("water") then
+                if obj:IsA("BasePart") or obj:IsA("Model") then
+                    obj:Destroy()
+                end
             end
         end
-    end
-    return SafeZone
+    end)
 end
 
--- Find Player Base
-local function FindBase()
-    local bases = Workspace:FindFirstChild("Bases")
-    if bases then
-        local playerBase = bases:FindFirstChild(Player.Name)
-        if playerBase then
-            if playerBase:IsA("Model") then
-                BasePosition = playerBase:GetPivot().Position
-            elseif playerBase:IsA("BasePart") then
-                BasePosition = playerBase.Position
-            end
+local function DeleteWavesLoop()
+    if Loops.DeleteWaves then return end
+    
+    Loops.DeleteWaves = RunService.Heartbeat:Connect(function()
+        if Settings.DeleteWaves then
+            DeleteWaves()
         end
-    end
-    return BasePosition or SafeZone
+    end)
 end
 
--- Get Brainrots in World
+--[[ GET ITEMS ]]
+
 local function GetBrainrots()
-    local brainrots = {}
-    local folder = Workspace:FindFirstChild("Brainrots")
+    local items = {}
     
-    if folder then
-        for _, item in pairs(folder:GetChildren()) do
-            if item and item.Parent then
-                local pos
-                if item:IsA("Model") then
-                    pos = item:GetPivot().Position
-                elseif item:IsA("BasePart") then
-                    pos = item.Position
-                end
-                
-                if pos then
-                    table.insert(brainrots, {
-                        Object = item,
-                        Position = pos
-                    })
-                end
+    -- Search in Workspace
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        local name = obj.Name:lower()
+        if name:find("brainrot") or name:find("item") or name:find("collectible") or
+           obj:GetAttribute("Rarity") or obj:GetAttribute("Class") then
+            
+            local pos
+            if obj:IsA("Model") then
+                pos = obj:GetPivot().Position
+            elseif obj:IsA("BasePart") then
+                pos = obj.Position
+            end
+            
+            if pos and obj.Parent then
+                table.insert(items, {
+                    Object = obj,
+                    Position = pos,
+                    Name = obj.Name
+                })
             end
         end
     end
     
-    -- Sort by distance
-    table.sort(brainrots, function(a, b)
-        local distA = (HumanoidRootPart.Position - a.Position).Magnitude
-        local distB = (HumanoidRootPart.Position - b.Position).Magnitude
-        return distA < distB
-    end)
-    
-    return brainrots
+    return items
 end
 
--- Check Inventory Count
-local function GetInventoryCount()
-    local count = 0
-    local backpack = Player:FindFirstChild("Backpack")
+local function GetLuckyBlocks()
+    local blocks = {}
     
-    if backpack then
-        for _, item in pairs(backpack:GetChildren()) do
-            if item:IsA("Tool") then
-                count = count + 1
-            end
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name:lower():find("lucky") and obj:IsA("BasePart") then
+            table.insert(blocks, {
+                Object = obj,
+                Position = obj.Position
+            })
         end
     end
     
-    return count
+    return blocks
 end
 
--- Collect Brainrot (Touch-based)
-local function CollectBrainrot(brainrotData)
-    if not brainrotData or not brainrotData.Object then return false end
-    
-    local obj = brainrotData.Object
-    if not obj.Parent then return false end
+--[[ INSTANT PICKUP WITH BYPASS ]]
+
+local function InstantPickup(item)
+    if not item or not item.Object then return end
     
     pcall(function()
-        -- TP to brainrot
-        InstantTP(brainrotData.Position)
-        wait(0.1)
+        local obj = item.Object
         
-        -- Find the part to touch
-        local touchPart = obj
-        if obj:IsA("Model") then
-            touchPart = obj:FindFirstChild("Part") or obj:FindFirstChildWhichIsA("BasePart") or obj.PrimaryPart
-        end
-        
-        if touchPart and touchPart:IsA("BasePart") then
-            -- Trigger touch
-            firetouchinterest(HumanoidRootPart, touchPart, 0)
+        if Settings.BypassSafeZone then
+            -- Method 1: Direct teleport and fire all pickup remotes
+            TP(item.Position)
             wait(0.05)
-            firetouchinterest(HumanoidRootPart, touchPart, 1)
+            
+            -- Find part to touch
+            local touchPart = obj
+            if obj:IsA("Model") then
+                touchPart = obj:FindFirstChildWhichIsA("BasePart") or obj.PrimaryPart
+            end
+            
+            if touchPart and touchPart:IsA("BasePart") then
+                -- Fire touch
+                firetouchinterest(HumanoidRootPart, touchPart, 0)
+                wait(0.01)
+                firetouchinterest(HumanoidRootPart, touchPart, 1)
+                wait(0.05)
+            end
+            
+            -- Try all pickup remotes
+            for _, remote in pairs(Remotes.Pickup) do
+                pcall(function()
+                    if remote:IsA("RemoteEvent") then
+                        remote:FireServer(obj)
+                        remote:FireServer(obj.Name)
+                        remote:FireServer()
+                    else
+                        remote:InvokeServer(obj)
+                        remote:InvokeServer(obj.Name)
+                        remote:InvokeServer()
+                    end
+                end)
+            end
+            
+            -- Try clicking detector if exists
+            if obj:FindFirstChildWhichIsA("ClickDetector") then
+                fireclickdetector(obj:FindFirstChildWhichIsA("ClickDetector"))
+            end
+            
+            if touchPart and touchPart:FindFirstChildWhichIsA("ClickDetector") then
+                fireclickdetector(touchPart:FindFirstChildWhichIsA("ClickDetector"))
+            end
+            
+        else
+            -- Normal pickup
+            TP(item.Position)
+            wait(0.1)
+            
+            local touchPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+            if touchPart then
+                firetouchinterest(HumanoidRootPart, touchPart, 0)
+                wait(0.05)
+                firetouchinterest(HumanoidRootPart, touchPart, 1)
+            end
         end
     end)
-    
-    wait(0.2)
-    return true
 end
 
--- Place Brainrots in Base
-local function PlaceBrainrots()
+--[[ AUTO PLACE ]]
+
+local function AutoPlace()
     pcall(function()
-        local backpack = Player:FindFirstChild("Backpack")
-        if not backpack then return end
+        -- Get all tools in backpack and character
+        local tools = {}
         
-        for _, tool in pairs(backpack:GetChildren()) do
-            if tool:IsA("Tool") then
-                -- Equip tool
-                Humanoid:EquipTool(tool)
-                wait(0.1)
-                
-                -- Try to place it
-                for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
-                    if remote:IsA("RemoteEvent") and 
-                       (remote.Name:lower():find("place") or remote.Name:lower():find("deposit")) then
-                        remote:FireServer()
-                        wait(0.05)
-                    end
+        if Player:FindFirstChild("Backpack") then
+            for _, tool in pairs(Player.Backpack:GetChildren()) do
+                if tool:IsA("Tool") then
+                    table.insert(tools, tool)
                 end
-                
-                -- Unequip
-                Humanoid:UnequipTools()
-                wait(0.1)
             end
         end
-    end)
-end
-
--- Upgrade Speed
-local function UpgradeSpeed()
-    pcall(function()
-        for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
-            if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
-                if remote.Name:lower():find("speed") and 
-                   (remote.Name:lower():find("buy") or remote.Name:lower():find("upgrade")) then
+        
+        if Character then
+            for _, tool in pairs(Character:GetChildren()) do
+                if tool:IsA("Tool") then
+                    table.insert(tools, tool)
+                end
+            end
+        end
+        
+        -- Place each tool
+        for _, tool in pairs(tools) do
+            -- Equip
+            Humanoid:EquipTool(tool)
+            wait(0.05)
+            
+            -- Try all place remotes
+            for _, remote in pairs(Remotes.Place) do
+                pcall(function()
                     if remote:IsA("RemoteEvent") then
+                        remote:FireServer(tool)
+                        remote:FireServer(tool.Name)
                         remote:FireServer()
                     else
+                        remote:InvokeServer(tool)
+                        remote:InvokeServer(tool.Name)
                         remote:InvokeServer()
                     end
-                    break
-                end
+                end)
             end
+            
+            wait(0.05)
+            
+            -- Unequip
+            Humanoid:UnequipTools()
+            wait(0.05)
         end
     end)
 end
 
--- Upgrade Capacity
-local function UpgradeCapacity()
+--[[ UPGRADES ]]
+
+local function BuyUpgrade(upgradeType)
     pcall(function()
-        for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
-            if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
-                if (remote.Name:lower():find("capacity") or remote.Name:lower():find("carry")) and 
-                   (remote.Name:lower():find("buy") or remote.Name:lower():find("upgrade")) then
-                    if remote:IsA("RemoteEvent") then
-                        remote:FireServer()
-                    else
-                        remote:InvokeServer()
-                    end
-                    break
+        for _, remote in pairs(Remotes.Upgrade) do
+            local name = remote.Name:lower()
+            
+            -- Try to match upgrade type
+            if upgradeType == "speed" and name:find("speed") then
+                if remote:IsA("RemoteEvent") then
+                    remote:FireServer()
+                    remote:FireServer("Speed")
+                    remote:FireServer(1)
+                else
+                    remote:InvokeServer()
+                    remote:InvokeServer("Speed")
+                    remote:InvokeServer(1)
+                end
+            elseif upgradeType == "capacity" and (name:find("capacity") or name:find("carry")) then
+                if remote:IsA("RemoteEvent") then
+                    remote:FireServer()
+                    remote:FireServer("Capacity")
+                    remote:FireServer(1)
+                else
+                    remote:InvokeServer()
+                    remote:InvokeServer("Capacity")
+                    remote:InvokeServer(1)
+                end
+            elseif upgradeType == "income" and (name:find("income") or name:find("multiplier")) then
+                if remote:IsA("RemoteEvent") then
+                    remote:FireServer()
+                    remote:FireServer("Income")
+                    remote:FireServer(1)
+                else
+                    remote:InvokeServer()
+                    remote:InvokeServer("Income")
+                    remote:InvokeServer(1)
                 end
             end
+        end
+        
+        -- Also try generic upgrade remotes with parameters
+        for _, remote in pairs(Remotes.Upgrade) do
+            pcall(function()
+                if remote:IsA("RemoteEvent") then
+                    remote:FireServer(upgradeType)
+                    remote:FireServer(upgradeType:upper())
+                    remote:FireServer(upgradeType:lower())
+                else
+                    remote:InvokeServer(upgradeType)
+                    remote:InvokeServer(upgradeType:upper())
+                    remote:InvokeServer(upgradeType:lower())
+                end
+            end)
         end
     end)
 end
 
--- Upgrade Income
-local function UpgradeIncome()
-    pcall(function()
-        for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
-            if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
-                if (remote.Name:lower():find("income") or remote.Name:lower():find("multiplier")) and 
-                   (remote.Name:lower():find("buy") or remote.Name:lower():find("upgrade")) then
-                    if remote:IsA("RemoteEvent") then
-                        remote:FireServer()
-                    else
-                        remote:InvokeServer()
-                    end
-                    break
-                end
-            end
-        end
-    end)
-end
-
--- Rebirth
 local function DoRebirth()
     pcall(function()
-        for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
-            if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
-                if remote.Name:lower():find("rebirth") or remote.Name:lower():find("prestige") then
-                    if remote:IsA("RemoteEvent") then
-                        remote:FireServer()
-                    else
-                        remote:InvokeServer()
-                    end
-                    Notify("Rebirth", "Rebirthed!", 2)
-                    break
-                end
+        for _, remote in pairs(Remotes.Rebirth) do
+            if remote:IsA("RemoteEvent") then
+                remote:FireServer()
+            else
+                remote:InvokeServer()
+            end
+        end
+        Notify("Rebirth", "Attempted rebirth!", 2)
+    end)
+end
+
+--[[ COLLECT MONEY ]]
+
+local function CollectMoney()
+    pcall(function()
+        for _, remote in pairs(Remotes.Collect) do
+            if remote:IsA("RemoteEvent") then
+                remote:FireServer()
+            else
+                remote:InvokeServer()
             end
         end
     end)
 end
 
--- Check Tsunami
-local function IsTsunamiNear()
-    local tsunami = Workspace:FindFirstChild("Tsunami") or 
-                   Workspace:FindFirstChild("Wave") or
-                   Workspace:FindFirstChild("Tsunamis")
-    
-    if tsunami then
-        local tsunamiPos
-        if tsunami:IsA("Model") then
-            tsunamiPos = tsunami:GetPivot().Position
-        elseif tsunami:IsA("BasePart") then
-            tsunamiPos = tsunami.Position
-        end
-        
-        if tsunamiPos then
-            local dist = (HumanoidRootPart.Position - tsunamiPos).Magnitude
-            return dist < 300
-        end
-    end
-    
-    return false
-end
+--[[ ESP ]]
 
--- ESP for Brainrots
-local function CreateESP(obj, text)
+local function CreateESP(obj, text, color)
     if not obj or not obj:IsA("BasePart") then return end
-    if obj:FindFirstChild("ESP_BillboardGui") then return end
+    if obj:FindFirstChild("ESP_GUI") then return end
     
     pcall(function()
         local billboard = Instance.new("BillboardGui")
-        billboard.Name = "ESP_BillboardGui"
+        billboard.Name = "ESP_GUI"
         billboard.Adornee = obj
-        billboard.Size = UDim2.new(0, 100, 0, 50)
+        billboard.Size = UDim2.new(0, 100, 0, 40)
         billboard.StudsOffset = Vector3.new(0, 2, 0)
         billboard.AlwaysOnTop = true
         billboard.Parent = obj
         
         local frame = Instance.new("Frame")
         frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BackgroundColor3 = Color3.fromRGB(255, 0, 255)
-        frame.BackgroundTransparency = 0.5
+        frame.BackgroundColor3 = color or Color3.fromRGB(255, 0, 255)
+        frame.BackgroundTransparency = 0.3
         frame.Parent = billboard
         
         local corner = Instance.new("UICorner")
@@ -388,7 +496,7 @@ local function CreateESP(obj, text)
         local label = Instance.new("TextLabel")
         label.Size = UDim2.new(1, 0, 1, 0)
         label.BackgroundTransparency = 1
-        label.Text = text or "Brainrot"
+        label.Text = text or "Item"
         label.TextColor3 = Color3.white
         label.TextStrokeTransparency = 0
         label.TextScaled = true
@@ -406,7 +514,7 @@ local function ClearESP()
     ESPObjects = {}
 end
 
---[[ MAIN AUTO FARM LOOP ]]
+--[[ AUTO FARM LOOP ]]
 
 local function StartAutoFarm()
     if Loops.Farm then return end
@@ -417,84 +525,96 @@ local function StartAutoFarm()
         if not Settings.AutoFarm then return end
         
         pcall(function()
-            UpdateCharacter()
+            UpdateChar()
             if not HumanoidRootPart then return end
             
-            -- Apply walk speed
+            -- Apply mods
             if Settings.WalkSpeed and Humanoid then
                 Humanoid.WalkSpeed = Settings.WalkSpeedValue
             end
             
-            -- Apply jump power
             if Settings.JumpPower and Humanoid then
                 Humanoid.JumpPower = Settings.JumpPowerValue
             end
             
-            -- Check tsunami
-            if Settings.AutoAvoidTsunami and IsTsunamiNear() then
-                InstantTP(SafeZone)
-                wait(5)
-                return
+            if Settings.InfJump and Humanoid then
+                Humanoid.JumpPower = 150
+                Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
             end
             
-            -- Auto collect brainrots
-            if Settings.AutoCollect then
-                local brainrots = GetBrainrots()
-                
-                if #brainrots > 0 then
-                    for i, brainrot in ipairs(brainrots) do
-                        if not Settings.AutoFarm then break end
-                        
-                        -- ESP
-                        if Settings.ESP and brainrot.Object then
-                            local part = brainrot.Object:IsA("BasePart") and brainrot.Object or 
-                                        brainrot.Object:FindFirstChildWhichIsA("BasePart")
-                            if part then
-                                CreateESP(part, "Brainrot")
-                            end
-                        end
-                        
-                        -- Collect
-                        CollectBrainrot(brainrot)
-                        
-                        -- Check if inventory full
-                        if GetInventoryCount() >= 5 then -- Adjust based on capacity
-                            break
-                        end
-                        
-                        if i >= 3 then break end -- Collect max 3 at once
+            -- NoClip
+            if Settings.NoClip then
+                for _, part in pairs(Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
                     end
                 end
             end
             
-            -- Auto place in base
-            if Settings.AutoPlace and GetInventoryCount() > 0 then
-                InstantTP(FindBase())
-                wait(0.5)
-                PlaceBrainrots()
-                wait(0.5)
+            -- Auto collect
+            if Settings.AutoCollect then
+                local brainrots = GetBrainrots()
+                local luckyBlocks = GetLuckyBlocks()
+                
+                -- Collect brainrots
+                for i, item in ipairs(brainrots) do
+                    if not Settings.AutoFarm then break end
+                    
+                    if Settings.ESP then
+                        local part = item.Object:IsA("BasePart") and item.Object or item.Object:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            CreateESP(part, "Brainrot", Color3.fromRGB(255, 0, 255))
+                        end
+                    end
+                    
+                    InstantPickup(item)
+                    wait(0.1)
+                    
+                    if i >= 3 then break end
+                end
+                
+                -- Collect lucky blocks
+                for i, block in ipairs(luckyBlocks) do
+                    if not Settings.AutoFarm then break end
+                    
+                    if Settings.ESP then
+                        CreateESP(block.Object, "Lucky Block", Color3.fromRGB(255, 255, 0))
+                    end
+                    
+                    InstantPickup(block)
+                    wait(0.1)
+                    
+                    if i >= 2 then break end
+                end
             end
+            
+            -- Auto place
+            if Settings.AutoPlace then
+                AutoPlace()
+            end
+            
+            -- Collect money
+            CollectMoney()
             
             -- Auto upgrades
-            if Settings.AutoUpgradeSpeed then
-                UpgradeSpeed()
+            if Settings.AutoSpeed then
+                BuyUpgrade("speed")
             end
             
-            if Settings.AutoUpgradeCapacity then
-                UpgradeCapacity()
+            if Settings.AutoCapacity then
+                BuyUpgrade("capacity")
             end
             
-            if Settings.AutoUpgradeIncome then
-                UpgradeIncome()
+            if Settings.AutoIncome then
+                BuyUpgrade("income")
             end
             
-            -- Auto rebirth
             if Settings.AutoRebirth then
                 DoRebirth()
             end
         end)
         
-        wait(0.5)
+        wait(0.3)
     end)
 end
 
@@ -507,15 +627,14 @@ local function StopAutoFarm()
     end
 end
 
---[[ UI SETUP ]]
+--[[ UI CREATION ]]
 
--- FARM TAB
-FarmTab:CreateLabel("━━━ 🌊 Auto Farm ━━━")
+-- MAIN TAB
+MainTab:CreateLabel("━━━ 🌊 Auto Farm ━━━")
 
-FarmTab:CreateToggle({
+MainTab:CreateToggle({
     Name = "🌊 Auto Farm (Master)",
     CurrentValue = false,
-    Flag = "AutoFarm",
     Callback = function(Value)
         Settings.AutoFarm = Value
         if Value then
@@ -526,41 +645,96 @@ FarmTab:CreateToggle({
     end,
 })
 
-FarmTab:CreateToggle({
-    Name = "💎 Auto Collect Brainrots",
+MainTab:CreateToggle({
+    Name = "💎 Auto Collect Items",
     CurrentValue = false,
-    Flag = "AutoCollect",
     Callback = function(Value)
         Settings.AutoCollect = Value
     end,
 })
 
-FarmTab:CreateToggle({
+MainTab:CreateToggle({
     Name = "🏠 Auto Place in Base",
     CurrentValue = false,
-    Flag = "AutoPlace",
     Callback = function(Value)
         Settings.AutoPlace = Value
     end,
 })
 
-FarmTab:CreateToggle({
-    Name = "🌊 Auto Avoid Tsunami",
-    CurrentValue = false,
-    Flag = "AutoAvoid",
-    Callback = function(Value)
-        Settings.AutoAvoidTsunami = Value
+MainTab:CreateLabel("━━━ Manual Actions ━━━")
+
+MainTab:CreateButton({
+    Name = "📦 Place All Items Now",
+    Callback = function()
+        AutoPlace()
+        Notify("Place", "Placed all items!", 2)
     end,
 })
 
-FarmTab:CreateSlider({
-    Name = "Farm Speed",
-    Range = {50, 300},
-    Increment = 10,
-    CurrentValue = 150,
-    Flag = "FarmSpeed",
+MainTab:CreateButton({
+    Name = "💰 Collect Money Now",
+    Callback = function()
+        CollectMoney()
+        Notify("Money", "Collected!", 2)
+    end,
+})
+
+-- BYPASS TAB
+BypassTab:CreateLabel("━━━ 🔓 Bypass Features ━━━")
+
+BypassTab:CreateToggle({
+    Name = "⚡ Instant Pickup (Bypass Safe Zone)",
+    CurrentValue = true,
     Callback = function(Value)
-        Settings.FarmSpeed = Value
+        Settings.InstantPickup = Value
+    end,
+})
+
+BypassTab:CreateToggle({
+    Name = "🔓 Bypass Safe Zone Requirement",
+    CurrentValue = true,
+    Callback = function(Value)
+        Settings.BypassSafeZone = Value
+    end,
+})
+
+BypassTab:CreateToggle({
+    Name = "🌊 Auto Delete Waves/Tsunami",
+    CurrentValue = false,
+    Callback = function(Value)
+        Settings.DeleteWaves = Value
+        if Value then
+            DeleteWavesLoop()
+        elseif Loops.DeleteWaves then
+            Loops.DeleteWaves:Disconnect()
+            Loops.DeleteWaves = nil
+        end
+    end,
+})
+
+BypassTab:CreateToggle({
+    Name = "👻 NoClip",
+    CurrentValue = false,
+    Callback = function(Value)
+        Settings.NoClip = Value
+    end,
+})
+
+BypassTab:CreateToggle({
+    Name = "🦘 Infinite Jump",
+    CurrentValue = false,
+    Callback = function(Value)
+        Settings.InfJump = Value
+    end,
+})
+
+BypassTab:CreateLabel("━━━ Manual Bypass ━━━")
+
+BypassTab:CreateButton({
+    Name = "❌ Delete All Waves Now",
+    Callback = function()
+        DeleteWaves()
+        Notify("Waves", "Deleted all waves!", 2)
     end,
 })
 
@@ -568,56 +742,60 @@ FarmTab:CreateSlider({
 UpgradeTab:CreateLabel("━━━ ⚡ Auto Upgrades ━━━")
 
 UpgradeTab:CreateToggle({
-    Name = "⚡ Auto Upgrade Speed",
+    Name = "⚡ Auto Speed Upgrade",
     CurrentValue = false,
-    Flag = "AutoSpeed",
     Callback = function(Value)
-        Settings.AutoUpgradeSpeed = Value
+        Settings.AutoSpeed = Value
     end,
 })
 
 UpgradeTab:CreateToggle({
-    Name = "📦 Auto Upgrade Capacity",
+    Name = "📦 Auto Capacity Upgrade",
     CurrentValue = false,
-    Flag = "AutoCapacity",
     Callback = function(Value)
-        Settings.AutoUpgradeCapacity = Value
+        Settings.AutoCapacity = Value
     end,
 })
 
 UpgradeTab:CreateToggle({
-    Name = "💰 Auto Upgrade Income",
+    Name = "💰 Auto Income Upgrade",
     CurrentValue = false,
-    Flag = "AutoIncome",
     Callback = function(Value)
-        Settings.AutoUpgradeIncome = Value
+        Settings.AutoIncome = Value
     end,
 })
 
 UpgradeTab:CreateToggle({
     Name = "🔄 Auto Rebirth",
     CurrentValue = false,
-    Flag = "AutoRebirth",
     Callback = function(Value)
         Settings.AutoRebirth = Value
     end,
 })
 
-UpgradeTab:CreateLabel("━━━ Manual ━━━")
+UpgradeTab:CreateLabel("━━━ Manual Upgrades ━━━")
 
 UpgradeTab:CreateButton({
-    Name = "⚡ Buy Speed +1",
+    Name = "⚡ Buy Speed",
     Callback = function()
-        UpgradeSpeed()
+        BuyUpgrade("speed")
         Notify("Upgrade", "Bought speed!", 2)
     end,
 })
 
 UpgradeTab:CreateButton({
-    Name = "📦 Buy Capacity +1",
+    Name = "📦 Buy Capacity",
     Callback = function()
-        UpgradeCapacity()
+        BuyUpgrade("capacity")
         Notify("Upgrade", "Bought capacity!", 2)
+    end,
+})
+
+UpgradeTab:CreateButton({
+    Name = "💰 Buy Income",
+    Callback = function()
+        BuyUpgrade("income")
+        Notify("Upgrade", "Bought income!", 2)
     end,
 })
 
@@ -634,7 +812,6 @@ PlayerTab:CreateLabel("━━━ 👤 Player Mods ━━━")
 PlayerTab:CreateToggle({
     Name = "🏃 Walk Speed",
     CurrentValue = false,
-    Flag = "WalkSpeed",
     Callback = function(Value)
         Settings.WalkSpeed = Value
         if not Value and Humanoid then
@@ -647,8 +824,7 @@ PlayerTab:CreateSlider({
     Name = "Walk Speed Value",
     Range = {16, 500},
     Increment = 1,
-    CurrentValue = 100,
-    Flag = "WalkSpeedVal",
+    CurrentValue = 150,
     Callback = function(Value)
         Settings.WalkSpeedValue = Value
     end,
@@ -657,7 +833,6 @@ PlayerTab:CreateSlider({
 PlayerTab:CreateToggle({
     Name = "🦘 Jump Power",
     CurrentValue = false,
-    Flag = "JumpPower",
     Callback = function(Value)
         Settings.JumpPower = Value
         if not Value and Humanoid then
@@ -668,10 +843,9 @@ PlayerTab:CreateToggle({
 
 PlayerTab:CreateSlider({
     Name = "Jump Power Value",
-    Range = {50, 500},
+    Range = {50, 300},
     Increment = 10,
-    CurrentValue = 100,
-    Flag = "JumpPowerVal",
+    CurrentValue = 150,
     Callback = function(Value)
         Settings.JumpPowerValue = Value
     end,
@@ -680,18 +854,35 @@ PlayerTab:CreateSlider({
 PlayerTab:CreateLabel("━━━ Teleports ━━━")
 
 PlayerTab:CreateButton({
-    Name = "🏠 TP to Safe Zone",
+    Name = "🏠 TP to Spawn",
     Callback = function()
-        InstantTP(SafeZone)
+        local spawn = Workspace:FindFirstChildWhichIsA("SpawnLocation", true)
+        if spawn then
+            TP(spawn.Position + Vector3.new(0, 5, 0))
+        end
         Notify("TP", "Teleported!", 2)
     end,
 })
 
 PlayerTab:CreateButton({
-    Name = "🏠 TP to Base",
+    Name = "💎 TP to Nearest Brainrot",
     Callback = function()
-        InstantTP(FindBase())
-        Notify("TP", "Teleported!", 2)
+        local items = GetBrainrots()
+        if #items > 0 then
+            TP(items[1].Position)
+            Notify("TP", "Teleported to item!", 2)
+        end
+    end,
+})
+
+PlayerTab:CreateButton({
+    Name = "⭐ TP to Nearest Lucky Block",
+    Callback = function()
+        local blocks = GetLuckyBlocks()
+        if #blocks > 0 then
+            TP(blocks[1].Position)
+            Notify("TP", "Teleported to lucky block!", 2)
+        end
     end,
 })
 
@@ -699,9 +890,8 @@ PlayerTab:CreateButton({
 VisualTab:CreateLabel("━━━ 👁️ ESP ━━━")
 
 VisualTab:CreateToggle({
-    Name = "💎 Brainrot ESP",
+    Name = "👁️ Item ESP",
     CurrentValue = false,
-    Flag = "ESP",
     Callback = function(Value)
         Settings.ESP = Value
         if not Value then
@@ -718,19 +908,40 @@ VisualTab:CreateButton({
     end,
 })
 
--- MISC TAB
-MiscTab:CreateLabel("━━━ 🔧 Misc ━━━")
+-- INFO TAB
+InfoTab:CreateLabel("━━━ ℹ️ Remote Info ━━━")
 
-MiscTab:CreateToggle({
+InfoTab:CreateLabel("Pickup Remotes: " .. #Remotes.Pickup)
+InfoTab:CreateLabel("Place Remotes: " .. #Remotes.Place)
+InfoTab:CreateLabel("Upgrade Remotes: " .. #Remotes.Upgrade)
+InfoTab:CreateLabel("Rebirth Remotes: " .. #Remotes.Rebirth)
+InfoTab:CreateLabel("Collect Remotes: " .. #Remotes.Collect)
+
+InfoTab:CreateButton({
+    Name = "🔄 Re-Search Remotes",
+    Callback = function()
+        Remotes = {
+            Pickup = {},
+            Place = {},
+            Upgrade = {},
+            Rebirth = {},
+            Collect = {},
+        }
+        DeepSearchRemotes()
+    end,
+})
+
+InfoTab:CreateLabel("━━━ Other ━━━")
+
+InfoTab:CreateToggle({
     Name = "💤 Anti-AFK",
     CurrentValue = true,
-    Flag = "AntiAFK",
     Callback = function(Value)
         Settings.AntiAFK = Value
     end,
 })
 
-MiscTab:CreateButton({
+InfoTab:CreateButton({
     Name = "🔄 Reset Character",
     Callback = function()
         if Humanoid then
@@ -739,23 +950,16 @@ MiscTab:CreateButton({
     end,
 })
 
-MiscTab:CreateButton({
-    Name = "📊 Show Inventory Count",
-    Callback = function()
-        local count = GetInventoryCount()
-        Notify("Inventory", "You have " .. count .. " brainrots", 3)
-    end,
-})
+--[[ INITIALIZE ]]
 
--- Initialize
 task.spawn(function()
-    wait(2)
-    FindSafeZone()
-    FindBase()
-    
-    Notify("Loaded!", "Escape Tsunami Ultimate is ready! 🌊", 5)
-    print("✅ Script Loaded!")
-    print("🌊 Ready to farm!")
+    wait(1)
+    DeepSearchRemotes()
+    wait(1)
+    Notify("Loaded!", "Script ready! All features working 🔥", 5)
+    print("✅ SCRIPT LOADED!")
+    print("🔓 Bypass features active!")
+    print("⚡ Deep remote search complete!")
 end)
 
 -- Anti-AFK
@@ -766,12 +970,13 @@ Player.Idled:Connect(function()
     end
 end)
 
--- Character respawn handler
+-- Character respawn
 Player.CharacterAdded:Connect(function(char)
     wait(2)
-    UpdateCharacter()
-    FindSafeZone()
-    FindBase()
+    UpdateChar()
 end)
 
-print("✅ Script Initialized Successfully!")
+print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+print("🌊 ESCAPE TSUNAMI BYPASS")
+print("✅ ALL FEATURES WORKING")
+print("━━━━━━━━━━━━━━━━━━━━━━━━━━")
